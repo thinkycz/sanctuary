@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import Alert from '@/components/ui/Alert.vue';
-import { useSharedProps } from '@/composables/useSharedProps';
+import { Head } from '@inertiajs/vue3';
+import Brand from '@/components/ui/Brand.vue';
+import FlashAlerts from '@/components/ui/FlashAlerts.vue';
 
 defineProps<{
     title: string;
     subtitle: string;
 }>();
-
-const { app, flash } = useSharedProps();
 </script>
 
 <template>
@@ -18,12 +16,10 @@ const { app, flash } = useSharedProps();
         class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10"
     >
         <section class="w-full max-w-md">
-            <Link
+            <Brand
                 href="/login"
                 class="mb-8 block text-center text-lg font-semibold text-gray-950"
-            >
-                {{ app.name }}
-            </Link>
+            />
 
             <div
                 class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
@@ -35,12 +31,7 @@ const { app, flash } = useSharedProps();
                     <p class="mt-2 text-sm text-gray-600">{{ subtitle }}</p>
                 </div>
 
-                <Alert v-if="flash.success" variant="success" class="mb-5">{{
-                    flash.success
-                }}</Alert>
-                <Alert v-if="flash.error" variant="error" class="mb-5">{{
-                    flash.error
-                }}</Alert>
+                <FlashAlerts />
 
                 <slot />
             </div>

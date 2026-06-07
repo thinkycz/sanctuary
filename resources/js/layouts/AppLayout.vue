@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { LogOut, Settings, UserRound } from '@lucide/vue';
+import Brand from '@/components/ui/Brand.vue';
 import Button from '@/components/ui/Button.vue';
-import Alert from '@/components/ui/Alert.vue';
+import FlashAlerts from '@/components/ui/FlashAlerts.vue';
 import { useSharedProps } from '@/composables/useSharedProps';
 
 defineProps<{
     title: string;
 }>();
 
-const { auth, flash, app } = useSharedProps();
+const { auth } = useSharedProps();
 
 function logout(): void {
     router.post('/logout');
@@ -24,12 +25,10 @@ function logout(): void {
             <div
                 class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4"
             >
-                <Link
+                <Brand
                     href="/dashboard"
                     class="text-base font-semibold text-gray-950"
-                >
-                    {{ app.name }}
-                </Link>
+                />
 
                 <nav class="flex items-center gap-2">
                     <Link
@@ -66,12 +65,7 @@ function logout(): void {
                 <Settings class="size-5 text-gray-500" />
             </div>
 
-            <Alert v-if="flash.success" variant="success" class="mb-5">{{
-                flash.success
-            }}</Alert>
-            <Alert v-if="flash.error" variant="error" class="mb-5">{{
-                flash.error
-            }}</Alert>
+            <FlashAlerts />
 
             <slot />
         </main>
