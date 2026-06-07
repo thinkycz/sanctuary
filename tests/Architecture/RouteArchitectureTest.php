@@ -32,7 +32,7 @@ declare(strict_types=1);
 \arch('routes/api.php has no path parameters (no {id} or similar)', function (): void {
     $contents = (string) \file_get_contents(\base_path('routes/api.php'));
 
-    \preg_match_all('/->\\(?:get|post\\)\\(\\s*[\'"]([^\'"]*)[\'"]/', $contents, $matches);
+    \preg_match_all('/->(?:get|post)\\(\\s*[\'"]([^\'"]*)[\'"]/', $contents, $matches);
 
     foreach ($matches[1] as $path) {
         \expect($path)

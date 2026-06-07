@@ -2,76 +2,62 @@
 
 declare(strict_types=1);
 
-namespace {{ namespace }};
-
 use App\Http\Controllers\Api\{{ model }}\{{ model }}IndexController;
 use {{ namespacedModel }};
 use App\Models\User;
 use Database\Factories\{{ model }}Factory;
 use Database\Factories\UserFactory;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Typer;
-use Tests\TestCase;
 
-class {{ class }} extends TestCase
-{
-    use RefreshDatabase;
+test('index {{ table }}', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
 
-    public function test_index_{{ table }}(): void
-    {
-        $auth = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
 
-        $model = Typer::assertInstance(
-            {{ model }}Factory::new()
-                ->for($auth)
-                ->createOne(),
-            {{ model }}::class,
-        );
+    $query = [
+        'filter' => [
+            'id' => [$model->getKey()],
+            'slug' => [$model->getRouteKey()],
+            'search' => $model->getTitle(),
+        ],
+        'take' => {{ model }}IndexController::TAKE,
+        'sort' => {{ model }}IndexController::SORT,
+        'page' => 1,
+        'mode' => 'DEFAULT',
+    ];
 
-        $query = [
-            'filter' => [
-                'id' => [$model->getKey()],
-                'slug' => [$model->getRouteKey()],
-                'search' => $model->getTitle(),
-            ],
-            'take' => {{ model }}IndexController::TAKE,
-            'sort' => {{ model }}IndexController::SORT,
-            'page' => 1,
-            'mode' => 'DEFAULT',
-        ];
+    $response = $this->be($auth)->get(Resolver::resolveUrlGenerator()->action({{ model }}IndexController::class, $query));
 
-        $response = $this->be($auth)->get(Resolver::resolveUrlGenerator()->action({{ model }}IndexController::class, $query));
+    $response->assertOk();
+});
 
-        $response->assertOk();
-    }
+test('index {{ table }} count', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
 
-    public function test_index_{{ table }}_count(): void
-    {
-        $auth = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
 
-        $model = Typer::assertInstance(
-            {{ model }}Factory::new()
-                ->for($auth)
-                ->createOne(),
-            {{ model }}::class,
-        );
+    $query = [
+        'filter' => [
+            'id' => [$model->getKey()],
+            'slug' => [$model->getRouteKey()],
+            'search' => $model->getTitle(),
+        ],
+        'mode' => 'COUNT',
+    ];
 
-        $query = [
-            'filter' => [
-                'id' => [$model->getKey()],
-                'slug' => [$model->getRouteKey()],
-                'search' => $model->getTitle(),
-            ],
-            'mode' => 'COUNT',
-        ];
+    $response = $this->be($auth)->get(Resolver::resolveUrlGenerator()->action({{ model }}IndexController::class, $query));
 
-        $response = $this->be($auth)->get(Resolver::resolveUrlGenerator()->action({{ model }}IndexController::class, $query));
+    $response->assertOk();
 
-        $response->assertOk();
-
-        $response->assertExactJson([
-            'data' => 1,
-        ]);
-    }
-}
+    $response->assertExactJson([
+        'data' => 1,
+    ]);
+});

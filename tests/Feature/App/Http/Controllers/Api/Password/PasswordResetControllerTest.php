@@ -2,72 +2,99 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Password\PasswordResetController;
 use App\Models\User;
 use Database\Factories\UserFactory;
-use Illuminate\Support\Facades\Hash;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Typer;
 
-\test('password can be reset with valid token', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne([
+\test('user can reset password', function (): void {
+    $user = UserFactory::new()->createOne([
         'email' => 'reset@example.com',
-    ]), User::class);
+        'password' => 'old_password',
+    ]);
+    \expect($user)->toBeInstanceOf(User::class);
 
     $token = Resolver::resolvePasswordBroker('users')->createToken($user);
 
-    $response = $this->postJson('/api/v1/password/reset', [
+    $data = [
         'token' => $token,
-        'email' => 'reset@example.com',
-        'password' => 'new-password',
-    ], ['Accept' => 'application/vnd.api+json']);
+        'email' => $user->getEmail(),
+        'password' => 'new_password',
+    ];
 
-    $response->assertStatus(200);
-    $response->assertJsonPath('data.attributes.email', 'reset@example.com');
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordResetController::class), $data);
+
+    $response->assertOk();
+
     $response->assertCookie(Resolver::resolveDatabaseTokenGuard($user->getTable())->cookieName());
 
+    $this->assertAuthenticatedAs($user);
+
     $user->refresh();
-    static::assertTrue(Hash::check('new-password', (string) $user->getAuthPassword()));
+
+    \expect(Resolver::resolveHasher()->check('new_password', $user->getAuthPassword()))->toBeTrue();
 });
 
-\test('reset fails with invalid token', function (): void {
-    Typer::assertInstance(UserFactory::new()->createOne([
+\test('password reset fails with invalid token', function (): void {
+    $user = UserFactory::new()->createOne([
         'email' => 'reset@example.com',
-    ]), User::class);
+        'password' => 'old_password',
+    ]);
+    \expect($user)->toBeInstanceOf(User::class);
 
-    $response = $this->postJson('/api/v1/password/reset', [
-        'token' => 'invalid-token',
-        'email' => 'reset@example.com',
-        'password' => 'new-password',
-    ], ['Accept' => 'application/vnd.api+json']);
+    $data = [
+        'token' => 'invalid_token',
+        'email' => $user->getEmail(),
+        'password' => 'new_password',
+    ];
 
-    $response->assertStatus(422);
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordResetController::class), $data);
+
+    $response->assertUnprocessable();
+
+    $response->assertJsonValidationErrors('token');
 });
 
-\test('reset fails with unknown email', function (): void {
-    $response = $this->postJson('/api/v1/password/reset', [
-        'token' => 'some-token',
-        'email' => 'nobody@example.com',
-        'password' => 'new-password',
-    ], ['Accept' => 'application/vnd.api+json']);
+\test('password reset fails with invalid email', function (): void {
+    $data = [
+        'token' => 'invalid_token',
+        'email' => 'nonexistent@example.com',
+        'password' => 'new_password',
+    ];
 
-    $response->assertStatus(422);
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordResetController::class), $data);
+
+    $response->assertUnprocessable();
+
+    $response->assertJsonValidationErrors('email');
+});
+
+\test('password reset requires valid data', function (): void {
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordResetController::class));
+
+    $response->assertUnprocessable();
+
+    $response->assertJsonValidationErrors(['token', 'email', 'password']);
 });
 
 \test('reset revokes existing database tokens', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne([
+    $user = UserFactory::new()->createOne([
         'email' => 'reset@example.com',
-    ]), User::class);
+    ]);
+    \expect($user)->toBeInstanceOf(User::class);
 
     Resolver::resolveDatabaseTokenGuard($user->getTable())->login($user);
     $this->assertDatabaseCount('database_tokens', 1);
 
     $token = Resolver::resolvePasswordBroker('users')->createToken($user);
 
-    $this->postJson('/api/v1/password/reset', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordResetController::class), [
         'token' => $token,
         'email' => 'reset@example.com',
         'password' => 'new-password',
-    ], ['Accept' => 'application/vnd.api+json'])->assertStatus(200);
+    ]);
+
+    $response->assertOk();
 
     $this->assertDatabaseCount('database_tokens', 1);
 });

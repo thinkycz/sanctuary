@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Hash;
-use Thinkycz\LaravelCore\Support\Typer;
+use Thinkycz\LaravelCore\Support\Resolver;
 
 \test('user can register and receive own resource', function (): void {
-    $response = $this->postJson('/api/v1/auth/register', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(RegisterController::class), [
         'email' => 'new@example.com',
         'password' => 'password1',
         'locale' => 'en',
@@ -20,7 +21,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('registered user password is hashed only once', function (): void {
-    $response = $this->postJson('/api/v1/auth/register', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(RegisterController::class), [
         'email' => 'new@example.com',
         'password' => 'password1',
         'locale' => 'en',
@@ -29,13 +30,13 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertStatus(201);
 
     $user = User::query()->where('email', 'new@example.com')->first();
-    static::assertNotNull($user);
-    static::assertNotSame('password1', $user->getAuthPassword());
-    static::assertTrue(Hash::check('password1', (string) $user->getAuthPassword()));
+    \expect($user)->not->toBeNull();
+    \expect($user->getAuthPassword())->not->toBe('password1');
+    \expect(Hash::check('password1', (string) $user->getAuthPassword()))->toBeTrue();
 });
 
 \test('register creates database token for user', function (): void {
-    $response = $this->postJson('/api/v1/auth/register', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(RegisterController::class), [
         'email' => 'new@example.com',
         'password' => 'password1',
         'locale' => 'en',
@@ -47,11 +48,12 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('register rejects duplicate email', function (): void {
-    Typer::assertInstance(UserFactory::new()->createOne([
+    $existing = UserFactory::new()->createOne([
         'email' => 'taken@example.com',
-    ]), User::class);
+    ]);
+    \expect($existing)->toBeInstanceOf(User::class);
 
-    $response = $this->postJson('/api/v1/auth/register', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(RegisterController::class), [
         'email' => 'taken@example.com',
         'password' => 'password1',
         'locale' => 'en',
@@ -61,7 +63,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('register rejects short password', function (): void {
-    $response = $this->postJson('/api/v1/auth/register', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(RegisterController::class), [
         'email' => 'new@example.com',
         'password' => 'short',
         'locale' => 'en',
@@ -71,7 +73,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('register rejects invalid email', function (): void {
-    $response = $this->postJson('/api/v1/auth/register', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(RegisterController::class), [
         'email' => 'not-an-email',
         'password' => 'password1',
         'locale' => 'en',

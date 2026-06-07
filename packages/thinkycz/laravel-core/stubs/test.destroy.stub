@@ -2,39 +2,27 @@
 
 declare(strict_types=1);
 
-namespace {{ namespace }};
-
 use App\Http\Controllers\Api\{{ model }}\{{ model }}DestroyController;
 use {{ namespacedModel }};
 use App\Models\User;
 use Database\Factories\{{ model }}Factory;
 use Database\Factories\UserFactory;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Typer;
-use Tests\TestCase;
 
-class {{ class }} extends TestCase
-{
-    use RefreshDatabase;
+test('destroy {{ table }}', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
 
-    public function test_destroy_{{ table }}(): void
-    {
-        $auth = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
 
-        $model = Typer::assertInstance(
-            {{ model }}Factory::new()
-                ->for($auth)
-                ->createOne(),
-            {{ model }}::class,
-        );
+    $data = [
+        'id' => $model->getKey(),
+    ];
 
-        $data = [
-            'id' => $model->getKey(),
-        ];
+    $response = $this->be($auth)->post(Resolver::resolveUrlGenerator()->action({{ model }}DestroyController::class), $data);
 
-        $response = $this->be($auth)->post(Resolver::resolveUrlGenerator()->action({{ model }}DestroyController::class), $data);
-
-        $response->assertNoContent();
-    }
-}
+    $response->assertNoContent();
+});

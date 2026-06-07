@@ -2,17 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Auth\LoginController;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Typer;
 
 \test('user can login with valid credentials', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne([
+    $user = UserFactory::new()->createOne([
         'email' => 'login@example.com',
-    ]), User::class);
+    ]);
+    \expect($user)->toBeInstanceOf(User::class);
 
-    $response = $this->postJson('/api/v1/auth/login', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(LoginController::class), [
         'email' => 'login@example.com',
         'password' => 'password',
     ], ['Accept' => 'application/vnd.api+json']);
@@ -23,11 +24,12 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('login fails with wrong password', function (): void {
-    Typer::assertInstance(UserFactory::new()->createOne([
+    $user = UserFactory::new()->createOne([
         'email' => 'login@example.com',
-    ]), User::class);
+    ]);
+    \expect($user)->toBeInstanceOf(User::class);
 
-    $response = $this->postJson('/api/v1/auth/login', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(LoginController::class), [
         'email' => 'login@example.com',
         'password' => 'wrong-password',
     ], ['Accept' => 'application/vnd.api+json']);
@@ -36,7 +38,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('login fails with unknown email', function (): void {
-    $response = $this->postJson('/api/v1/auth/login', [
+    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(LoginController::class), [
         'email' => 'nobody@example.com',
         'password' => 'password',
     ], ['Accept' => 'application/vnd.api+json']);
@@ -45,13 +47,14 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('login creates database token for user', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne([
+    $user = UserFactory::new()->createOne([
         'email' => 'login@example.com',
-    ]), User::class);
+    ]);
+    \expect($user)->toBeInstanceOf(User::class);
 
     $this->assertDatabaseCount('database_tokens', 0);
 
-    $this->postJson('/api/v1/auth/login', [
+    $this->postJson(Resolver::resolveUrlGenerator()->action(LoginController::class), [
         'email' => 'login@example.com',
         'password' => 'password',
     ], ['Accept' => 'application/vnd.api+json'])->assertStatus(200);
