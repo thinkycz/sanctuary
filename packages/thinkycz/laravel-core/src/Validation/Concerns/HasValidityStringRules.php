@@ -248,7 +248,7 @@ trait HasValidityStringRules
      *
      * @return $this
      */
-    public function email(bool $filterUnicode = true, bool $strict = true, bool $dns = true, bool $rfc = false, bool $spoof = true, bool $filter = false): static
+    public function email(bool $filterUnicode = true, bool $strict = true, bool $dns = false, bool $rfc = false, bool $spoof = true, bool $filter = false): static
     {
         if ($this->skipNext) {
             $this->skipNext = false;
