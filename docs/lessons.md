@@ -200,6 +200,12 @@ real token.
 
 ## Dev environment
 
+### Local domain resolution with Laravel Valet or Herd
+
+**Context.** When developing locally, there is a high chance that the developer is using Laravel Valet or Herd, so the project runs automatically on a `.test` domain (for example, `http://laravel-inertia-stack.test`).
+
+**Fix.** If the `.test` domain does not resolve or work, run a local development web server manually using `php artisan serve`.
+
 ### `php artisan serve` workers persist; `pkill -f "artisan serve"` is not enough
 
 **Problem.** After killing `php artisan serve`, `lsof -i :8000` still
@@ -276,9 +282,3 @@ rewrites native function calls. PHPStan catches type errors that
 are invisible at runtime. Prettier aligns the frontend. Audits
 flag supply-chain issues. Without the loop, the next `make check`
 on CI fails on a fixable lint issue.
-
-### The phase 4 verification doc is the source of decisions
-
-`docs/verification/phase4-e2e-2026-06-07.md` records the Inertia v3
-quirks, e2e gotchas, and the validation-handler fix. Read it before
-touching auth or forms.
