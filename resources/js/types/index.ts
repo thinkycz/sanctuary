@@ -16,6 +16,12 @@ export interface FlashProps {
     error: string | null;
 }
 
+export interface ConversationItem {
+    id: string;
+    title: string;
+    updated_at: string;
+}
+
 export interface SharedProps {
     [key: string]: unknown;
 
@@ -23,6 +29,7 @@ export interface SharedProps {
     auth: {
         user: AuthUser | null;
     };
+    conversations: ConversationItem[];
     flash: FlashProps;
     errors: Record<string, string>;
 }

@@ -9,7 +9,6 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Routing\Controller as IlluminateController;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Http\RequestSignature;
-use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\ThrottleSupport;
 
 class Controller extends IlluminateController
@@ -63,7 +62,7 @@ class Controller extends IlluminateController
      */
     protected function limit(RequestSignature|null $signature = null): Limit
     {
-        $signature = $signature instanceof RequestSignature ? $signature : new RequestSignature(Resolver::resolveRequest());
+        $signature = $signature instanceof RequestSignature ? $signature : RequestSignature::default();
 
         return Limit::perMinutes(static::$decay, static::$throttle)->by($signature->hash());
     }

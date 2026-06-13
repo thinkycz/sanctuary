@@ -2,7 +2,7 @@
 withDefaults(
     defineProps<{
         id?: string;
-        message?: string | undefined;
+        message?: string | null | undefined;
     }>(),
     {
         id: undefined,

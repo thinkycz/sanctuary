@@ -2,11 +2,23 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\Auth\EmailVerificationConfirmController;
+use App\Http\Controllers\Web\Auth\ForgotPasswordController;
+use App\Http\Controllers\Web\Auth\LoginController;
+use App\Http\Controllers\Web\Auth\LogoutController;
+use App\Http\Controllers\Web\Auth\RegisterController;
+use App\Http\Controllers\Web\Auth\ResetPasswordController;
+use App\Http\Controllers\Web\Auth\VerifyEmailController;
+use App\Http\Controllers\Web\ConversationController;
+use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\Settings\SettingsController;
+use App\Http\Middleware\EnsureInertiaUserIsAuthenticated;
+use App\Models\User;
 use Illuminate\Routing\Router;
 use Thinkycz\LaravelCore\Support\Resolver;
 
 Resolver::resolveRouteRegistrar()->get('/', static function () {
-    if (App\Models\User::auth() instanceof App\Models\User) {
+    if (User::auth() instanceof User) {
         return Resolver::resolveRedirector()->to('/dashboard');
     }
 
@@ -16,27 +28,31 @@ Resolver::resolveRouteRegistrar()->get('/', static function () {
 Resolver::resolveRouteRegistrar()
     ->middleware('guest:users')
     ->group(static function (Router $router): void {
-        $router->get('login', [App\Http\Controllers\Web\Auth\LoginController::class, 'create']);
-        $router->post('login', [App\Http\Controllers\Web\Auth\LoginController::class, 'store']);
-        $router->get('register', [App\Http\Controllers\Web\Auth\RegisterController::class, 'create']);
-        $router->post('register', [App\Http\Controllers\Web\Auth\RegisterController::class, 'store']);
-        $router->get('forgot-password', [App\Http\Controllers\Web\Auth\ForgotPasswordController::class, 'create']);
-        $router->post('forgot-password', [App\Http\Controllers\Web\Auth\ForgotPasswordController::class, 'store']);
-        $router->get('reset-password', [App\Http\Controllers\Web\Auth\ResetPasswordController::class, 'create']);
-        $router->post('reset-password', [App\Http\Controllers\Web\Auth\ResetPasswordController::class, 'store']);
+        $router->get('login', [LoginController::class, 'create']);
+        $router->post('login', [LoginController::class, 'store']);
+        $router->get('register', [RegisterController::class, 'create']);
+        $router->post('register', [RegisterController::class, 'store']);
+        $router->get('forgot-password', [ForgotPasswordController::class, 'create']);
+        $router->post('forgot-password', [ForgotPasswordController::class, 'store']);
+        $router->get('reset-password', [ResetPasswordController::class, 'create']);
+        $router->post('reset-password', [ResetPasswordController::class, 'store']);
     });
 
-Resolver::resolveRouteRegistrar()->get('email/verify', App\Http\Controllers\Web\Auth\EmailVerificationConfirmController::class);
+Resolver::resolveRouteRegistrar()->get('email/verify', EmailVerificationConfirmController::class);
 
 Resolver::resolveRouteRegistrar()
-    ->middleware(App\Http\Middleware\EnsureInertiaUserIsAuthenticated::class)
+    ->middleware(EnsureInertiaUserIsAuthenticated::class)
     ->group(static function (Router $router): void {
-        $router->post('logout', App\Http\Controllers\Web\Auth\LogoutController::class);
-        $router->get('dashboard', App\Http\Controllers\Web\DashboardController::class);
-        $router->get('verify-email', [App\Http\Controllers\Web\Auth\VerifyEmailController::class, 'create']);
-        $router->post('verify-email', [App\Http\Controllers\Web\Auth\VerifyEmailController::class, 'store']);
-        $router->get('settings/profile', [App\Http\Controllers\Web\Settings\ProfileController::class, 'edit']);
-        $router->post('settings/profile', [App\Http\Controllers\Web\Settings\ProfileController::class, 'update']);
-        $router->get('settings/password', [App\Http\Controllers\Web\Settings\PasswordController::class, 'edit']);
-        $router->post('settings/password', [App\Http\Controllers\Web\Settings\PasswordController::class, 'update']);
+        $router->post('logout', LogoutController::class);
+        $router->get('dashboard', DashboardController::class);
+        $router->get('verify-email', [VerifyEmailController::class, 'create']);
+        $router->post('verify-email', [VerifyEmailController::class, 'store']);
+        $router->get('settings', [SettingsController::class, 'edit']);
+        $router->post('settings/profile', [SettingsController::class, 'updateProfile']);
+        $router->post('settings/password', [SettingsController::class, 'updatePassword']);
+
+        $router->get('conversations/{id}', [ConversationController::class, 'show']);
+        $router->post('conversations', [ConversationController::class, 'store']);
+        $router->post('conversations/{id}/messages', [ConversationController::class, 'storeMessage']);
+        $router->delete('conversations/{id}', [ConversationController::class, 'destroy']);
     });

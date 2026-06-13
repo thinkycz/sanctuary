@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Enums\GuardEnum;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Exceptions\GenericHttpException;
 use Thinkycz\LaravelCore\Http\ApiFormRequest;
@@ -29,11 +30,13 @@ class RegisterController extends AutomaticController
         $guard = $validated->parseNullableString('guard') ?? $this->getDefaultGuard();
 
         if ($guard === GuardEnum::USERS->value) {
-            $user = User::create([
-                'email' => $validated->assertString('email'),
-                'locale' => $validated->assertString('locale'),
-                'password' => $validated->assertString('password'),
-            ]);
+            $user = DB::transaction(static function () use ($validated): User {
+                return User::create([
+                    'email' => $validated->assertString('email'),
+                    'locale' => $validated->assertString('locale'),
+                    'password' => $validated->assertString('password'),
+                ]);
+            });
         } else {
             throw GenericHttpException::unauthorized();
         }

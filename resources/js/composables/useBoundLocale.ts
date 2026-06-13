@@ -8,9 +8,9 @@ import type { SharedProps } from '@/types';
  * Bind the active vue-i18n locale to the locale shared by the
  * server (`app.locale` from `SetPreferredLanguageMiddleware`, or
  * the logged-in user's preferred locale). When the user changes
- * their locale via `<LocaleSwitcher>` and Inertia re-renders,
- * the watcher picks up the new value and updates the i18n
- * instance so the UI strings flip without a hard reload.
+ * their locale in the Settings page and Inertia re-renders, the
+ * watcher picks up the new value and updates the i18n instance
+ * so the UI strings flip without a hard reload.
  */
 export function useBoundLocale(): void {
     const i18n = useI18n();

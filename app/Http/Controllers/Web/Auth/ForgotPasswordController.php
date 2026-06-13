@@ -8,12 +8,13 @@ use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Models\BaseUser;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 use Thinkycz\LaravelCore\Validation\AuthValidity;
 
@@ -48,22 +49,22 @@ class ForgotPasswordController
         ]), BaseUser::class);
 
         if ($user instanceof BaseUser === false) {
-            throw ValidationException::withMessages([
-                'email' => \__(PasswordBroker::INVALID_USER),
-            ]);
+            Thrower::default()->message('email', Typer::assertString(\__(PasswordBroker::INVALID_USER)))->throw();
         }
 
         $password = Str::password(16);
 
-        $user->update([
-            'password' => $password,
-        ]);
+        DB::transaction(static function () use ($user, $password): void {
+            $user->update([
+                'password' => $password,
+            ]);
 
-        $user->databaseTokens()->getQuery()->delete();
+            $user->databaseTokens()->getQuery()->delete();
+        });
 
         $user->sendPasswordNewPasswordSettedNotification($password);
 
-        $request->session()->flash('success', \__('A new password has been sent to your email address.'));
+        Inertia::flash('success', \__('A new password has been sent to your email address.'));
 
         return Inertia::render('auth/ForgotPassword');
     }

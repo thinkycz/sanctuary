@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -43,15 +44,17 @@ class RegisterController
 
         $validated = $this->validateRequest($request, [
             'email' => $authValidity->email()->unique('users', 'email')->required()->toArray(),
-            'password' => $authValidity->password()->required()->toArray(),
+            'password' => $authValidity->password()->required()->confirmed()->toArray(),
             'locale' => $authValidity->locale()->required()->toArray(),
         ]);
 
-        $user = User::create([
-            'email' => $validated->assertString('email'),
-            'locale' => $validated->assertString('locale'),
-            'password' => $validated->assertString('password'),
-        ]);
+        $user = DB::transaction(static function () use ($validated): User {
+            return User::create([
+                'email' => $validated->assertString('email'),
+                'locale' => $validated->assertString('locale'),
+                'password' => $validated->assertString('password'),
+            ]);
+        });
 
         Resolver::resolveDatabaseTokenGuard('users')->login($user);
 

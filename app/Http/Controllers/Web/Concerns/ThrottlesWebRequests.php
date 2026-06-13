@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Web\Concerns;
 use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
 use Thinkycz\LaravelCore\Http\RequestSignature;
-use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Env;
 use Thinkycz\LaravelCore\Support\ThrottleSupport;
 
 trait ThrottlesWebRequests
@@ -23,18 +23,6 @@ trait ThrottlesWebRequests
     public static int $decay = 15;
 
     /**
-     * Register throttle.
-     *
-     * @param (Closure(int): never)|null $onError
-     *
-     * @return array{Closure(): void, Closure(): void}
-     */
-    protected function throttle(Limit $limit, Closure|null $onError = null): array
-    {
-        return ThrottleSupport::throttle($limit, $onError);
-    }
-
-    /**
      * Register throttle and hit.
      *
      * @param (Closure(int): never)|null $onError
@@ -43,6 +31,10 @@ trait ThrottlesWebRequests
      */
     protected function hit(Limit $limit, Closure|null $onError = null): Closure
     {
+        if (Env::inject()->parseBool('E2E_DISABLE_THROTTLE') === true) {
+            return static function (): void {};
+        }
+
         return ThrottleSupport::hit($limit, $onError);
     }
 
@@ -51,7 +43,7 @@ trait ThrottlesWebRequests
      */
     protected function limit(RequestSignature|null $signature = null): Limit
     {
-        $signature = $signature instanceof RequestSignature ? $signature : new RequestSignature(Resolver::resolveRequest());
+        $signature = $signature instanceof RequestSignature ? $signature : RequestSignature::default();
 
         return Limit::perMinutes(static::$decay, static::$throttle)->by($signature->hash());
     }

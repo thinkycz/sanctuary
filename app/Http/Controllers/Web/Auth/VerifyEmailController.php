@@ -35,7 +35,7 @@ class VerifyEmailController
             $user->sendEmailVerificationNotification();
         }
 
-        $request->session()->flash('success', \__('Verification email sent.'));
+        Inertia::flash('success', \__('Verification email sent.'));
 
         return Inertia::render('auth/VerifyEmail');
     }

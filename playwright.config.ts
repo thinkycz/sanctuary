@@ -30,6 +30,7 @@ export default defineConfig({
             APP_ENV: 'testing',
             SESSION_SECURE_COOKIE: 'false',
             MAIL_MAILER: 'log',
+            E2E_DISABLE_THROTTLE: 'true',
         },
     },
 });

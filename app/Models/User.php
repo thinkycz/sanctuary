@@ -6,12 +6,25 @@ namespace App\Models;
 
 use App\Http\Resources\UserResource;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Carbon;
+use Laravel\Ai\Models\Conversation;
 use Thinkycz\LaravelCore\Models\BaseUser;
 
 class User extends BaseUser implements MustVerifyEmail
 {
+    /**
+     * Get the user's AI conversations.
+     *
+     * @return HasMany<Conversation, $this>
+     */
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class, 'user_id')
+            ->orderBy('updated_at', 'desc');
+    }
+
     /**
      * Email getter.
      */

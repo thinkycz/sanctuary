@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { useSharedProps } from '@/composables/useSharedProps';
 
 withDefaults(
@@ -14,6 +15,7 @@ withDefaults(
 );
 
 const { app } = useSharedProps();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -25,20 +27,20 @@ const { app } = useSharedProps();
         ]"
     >
         <div
-            class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-container font-heading text-lg font-bold text-on-primary-container shadow-[0_2px_8px_rgba(0,131,120,0.15)]"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-base font-bold text-white shadow-[0_2px_8px_rgba(15,23,42,0.2)]"
         >
-            L
+            S
         </div>
         <div class="text-left">
             <h1
-                class="mb-0.5 font-heading text-sm font-bold tracking-tight text-primary leading-none"
+                class="mb-0.5 font-heading text-sm font-bold tracking-tight text-on-surface leading-none"
             >
                 {{ app.name }}
             </h1>
             <p
-                class="font-mono text-[9px] font-semibold tracking-wider text-on-surface-variant uppercase opacity-85 leading-none"
+                class="font-mono text-[9px] font-semibold tracking-wider text-on-surface-variant uppercase opacity-75 leading-none"
             >
-                Workspace
+                {{ t('brand.subtitle') }}
             </p>
         </div>
     </Link>

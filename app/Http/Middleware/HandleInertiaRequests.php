@@ -44,6 +44,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => fn(): array|null => $this->user(),
             ],
+            'conversations' => fn(): array => $request->user() instanceof User
+                ? $request->user()->conversations()->select(['id', 'title', 'updated_at'])->get()->toArray()
+                : [],
             'flash' => [
                 'success' => static fn(): string|null => self::flashMessage($request, 'success'),
                 'error' => static fn(): string|null => self::flashMessage($request, 'error'),

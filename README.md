@@ -27,7 +27,7 @@ make check
 - `/login`, `/register`, `/forgot-password`, `/reset-password`
 - `/dashboard`
 - `/verify-email`
-- `/settings/profile`, `/settings/password`
+- `/settings` (unified profile + password page)
 
 Minimal API-compatible auth endpoints remain under `/api/v1/auth`, `/api/v1/me`, `/api/v1/password`, and `/api/v1/email_verification`.
 

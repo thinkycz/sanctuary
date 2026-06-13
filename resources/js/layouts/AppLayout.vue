@@ -1,23 +1,40 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Activity, Settings as SettingsIcon, LogOut } from '@lucide/vue';
+import {
+    Activity,
+    Settings as SettingsIcon,
+    LogOut,
+    Plus,
+    MessageSquare,
+    Trash2,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Brand from '@/components/ui/Brand.vue';
 import FlashAlerts from '@/components/ui/FlashAlerts.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useSharedProps } from '@/composables/useSharedProps';
+import { useActiveConversation } from '@/composables/useActiveConversation';
 
 defineProps<{
     title: string;
 }>();
 
-const { auth } = useSharedProps();
+const { auth, conversations } = useSharedProps();
 const { t } = useI18n();
+const { pendingConversationId } = useActiveConversation();
 
 useBoundLocale();
 
 const activeUrl = computed(() => usePage().url);
+
+const activeConversationId = computed(() => {
+    // While a new conversation is streaming, use the pending ID so the sidebar
+    // item is highlighted immediately without needing a router navigation.
+    if (pendingConversationId.value) return pendingConversationId.value;
+    const match = activeUrl.value.match(/^\/conversations\/([a-zA-Z0-9-]+)/);
+    return match ? match[1] : null;
+});
 
 const currentTab = computed(() => {
     if (activeUrl.value.startsWith('/settings')) {
@@ -35,13 +52,24 @@ const userInitials = computed(() => {
 function logout(): void {
     router.post('/logout');
 }
+
+function deleteConversation(id: string): void {
+    if (
+        confirm(
+            t('conversations.delete_confirm') ||
+                'Are you sure you want to delete this conversation?',
+        )
+    ) {
+        router.delete(`/conversations/${id}`);
+    }
+}
 </script>
 
 <template>
     <Head :title="title" />
 
     <div
-        class="flex min-h-screen flex-col bg-surface-bg font-sans antialiased md:flex-row"
+        class="flex h-screen flex-col overflow-hidden bg-surface-bg font-sans antialiased md:flex-row"
     >
         <!-- Desktop Persistent Sidebar -->
         <aside
@@ -55,12 +83,12 @@ function logout(): void {
             </div>
 
             <!-- Nav Links -->
-            <nav class="flex-1 space-y-1.5">
+            <nav class="flex-1 space-y-1.5 overflow-y-auto">
                 <Link
                     href="/dashboard"
                     :class="[
                         'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition-all',
-                        currentTab === 'dashboard'
+                        currentTab === 'dashboard' && !activeConversationId
                             ? 'border-r-2 border-primary bg-surface-container-low font-bold text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]'
                             : 'text-on-surface-variant hover:bg-surface-container-low',
                     ]"
@@ -68,6 +96,48 @@ function logout(): void {
                     <Activity :size="16" />
                     {{ t('nav.dashboard') }}
                 </Link>
+
+                <!-- Conversations History -->
+                <div
+                    v-if="conversations.length > 0"
+                    class="mt-6 pt-4 border-t border-outline-glass"
+                >
+                    <p
+                        class="px-3 mb-2 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase opacity-75"
+                    >
+                        {{ t('nav.history') || 'History' }}
+                    </p>
+                    <TransitionGroup name="list" tag="div" class="space-y-1">
+                        <div
+                            v-for="chat in conversations"
+                            :key="chat.id"
+                            class="group relative flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all hover:bg-surface-container-low"
+                            :class="[
+                                activeConversationId === chat.id
+                                    ? 'bg-surface-container-low font-bold text-primary border-r-2 border-primary'
+                                    : 'text-on-surface-variant',
+                            ]"
+                        >
+                            <Link
+                                :href="`/conversations/${chat.id}`"
+                                class="flex flex-1 items-center gap-3 truncate pr-6 text-left"
+                            >
+                                <MessageSquare :size="14" class="shrink-0" />
+                                <span class="truncate">{{ chat.title }}</span>
+                            </Link>
+                            <button
+                                @click.stop="deleteConversation(chat.id)"
+                                class="absolute right-2 hidden cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-rose-50/50 hover:text-error-red group-hover:block"
+                                :title="
+                                    t('nav.delete_chat') ||
+                                    'Delete Conversation'
+                                "
+                            >
+                                <Trash2 :size="12" />
+                            </button>
+                        </div>
+                    </TransitionGroup>
+                </div>
             </nav>
 
             <!-- Footer: User Identity + Quick Actions -->
@@ -165,17 +235,21 @@ function logout(): void {
         </header>
 
         <!-- Main Workspace -->
-        <main class="flex min-h-screen flex-1 flex-col overflow-x-hidden">
-            <div class="relative flex flex-1 flex-col p-4 md:p-8">
+        <main class="flex h-screen flex-1 flex-col overflow-hidden">
+            <div
+                class="relative flex flex-1 flex-col overflow-hidden p-4 md:p-8"
+            >
                 <!-- Ambient Decorator -->
                 <div
                     class="pointer-events-none absolute top-1/2 left-1/2 h-[70vw] w-[70vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[100px]"
                 ></div>
 
-                <div class="z-10 flex flex-1 flex-col max-w-4xl w-full mx-auto">
+                <div
+                    class="z-10 flex flex-1 flex-col overflow-hidden max-w-4xl w-full mx-auto"
+                >
                     <FlashAlerts />
 
-                    <div class="flex-1">
+                    <div class="flex flex-1 flex-col overflow-hidden">
                         <slot />
                     </div>
                 </div>
@@ -183,3 +257,15 @@ function logout(): void {
         </main>
     </div>
 </template>
+
+<style scoped>
+.list-enter-active,
+.list-leave-active {
+    transition: all 0.2s ease-in-out;
+}
+.list-enter-from,
+.list-leave-to {
+    opacity: 0;
+    transform: scale(0.95) translateX(-10px);
+}
+</style>

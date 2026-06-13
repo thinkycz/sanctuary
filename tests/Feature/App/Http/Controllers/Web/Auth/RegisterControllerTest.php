@@ -16,6 +16,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
     $response = $this->post('/register', [
         'email' => 'new-user@example.com',
         'password' => 'password',
+        'password_confirmation' => 'password',
         'locale' => 'en',
     ]);
 
@@ -29,10 +30,25 @@ use Thinkycz\LaravelCore\Support\Resolver;
     ]);
 });
 
+\test('register rejects mismatched password confirmation', function (): void {
+    $response = $this->post('/register', [
+        'email' => 'new-user@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'different-password',
+        'locale' => 'en',
+    ]);
+
+    $response->assertStatus(422);
+    $this->assertDatabaseMissing('users', [
+        'email' => 'new-user@example.com',
+    ]);
+});
+
 \test('registered user password is hashed only once', function (): void {
     $this->post('/register', [
         'email' => 'new-user@example.com',
         'password' => 'password',
+        'password_confirmation' => 'password',
         'locale' => 'en',
     ]);
 

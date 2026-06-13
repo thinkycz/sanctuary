@@ -6,10 +6,16 @@
         "skip_to_main": "Preskočiť na hlavný obsah",
         "dashboard": "Nástenka",
         "settings": "Nastavenia",
-        "logout": "Odhlásiť sa"
+        "logout": "Odhlásiť sa",
+        "new_chat": "Nový chat",
+        "history": "Konverzácie",
+        "delete_chat": "Vymazať konverzáciu"
     },
     "brand": {
         "subtitle": "Štartovacia sada"
+    },
+    "conversations": {
+        "delete_confirm": "Naozaj chcete vymazať túto konverzáciu?"
     },
     "auth": {
         "login": {
@@ -58,7 +64,7 @@
         },
         "password": {
             "title": "Heslo",
-            "submit": "Aktualizovať heslo",
+            "submit": "Aktualizovat heslo",
             "back_to_profile": "Späť na profil"
         }
     },
@@ -67,15 +73,25 @@
         "welcome": "Prihlásený používateľ",
         "settings_heading": "Nastavenia",
         "settings_description": "Aplikácia používa referenčný database-token cookie guard.",
-        "manage_profile": "Spravovať profil"
+        "manage_profile": "Spravovať profil",
+        "how_can_i_help": "Ako vám môžem dnes pomôcť?",
+        "chat_description": "Spusťte interaktívny chat s vaším AI agentom. Tento zásobník je optimalizovaný pomocou Laravel AI SDK a OpenRouteru.",
+        "type_message": "Napíšte správu...",
+        "suggestions": {
+            "inertia": "Vysvetli Inertia.js, ako by som mal päť rokov",
+            "route": "Napíš definíciu Laravel routy pre REST API",
+            "schema": "Navrhni databázovú schému pre e-shop"
+        }
     },
     "fields": {
         "email": "E-mail",
         "password": "Heslo",
-        "password_confirmation": "Potvrdiť heslo",
+        "password_confirmation": "Potvrdit heslo",
         "current_password": "Súčasné heslo",
         "new_password": "Nové heslo",
-        "locale": "Jazyk"
+        "locale": "Jazyk",
+        "user": "Vy",
+        "assistant": "Asistent"
     },
     "locale": {
         "switcher_label": "Jazyk",

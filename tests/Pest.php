@@ -3,6 +3,30 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
-\pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Architecture', 'Feature');
+\pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Architecture', 'Feature', 'Unit');
+
+/**
+ * Assert that the response carries an Inertia flash message
+ * (success or error) under the given key.
+ *
+ * Works for both redirect responses (via the Inertia re-flash
+ * mechanism) and 200 OK Inertia render responses (via the
+ * `flash` prop the HandleInertiaRequests middleware injects).
+ */
+function assertInertiaFlash(TestResponse $response, string $key, mixed $message): void
+{
+    try {
+        $response->assertInertiaFlash($key, $message);
+
+        return;
+    } catch (Throwable) {
+        // Fall through to the props check for 200 OK render responses.
+    }
+
+    $flashed = $response->json('props.flash.' . $key);
+
+    \expect($flashed)->toBe($message);
+}

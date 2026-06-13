@@ -29,24 +29,37 @@
 - Makefile is the primary workflow entry:
     - Provisioning: `make local|testing|development|staging|production`.
     - Formatting: `make fix`.
-    - Validation: `make check` runs PHPStan, Prettier/Pint, audits, frontend build/type-check, and tests.
+    - Validation: `make check` runs PHPStan, Prettier/Pint, audits, frontend build/type-check, Vitest unit tests, and PHPUnit tests.
 - Before each commit: run `make fix` then `make check`.
+- PHPStan must remain at `level: max` with `treatPhpDocTypesAsCertain: true`; do not lower strictness, reintroduce a baseline, or add broad ignores to make analysis pass. Eloquent's magic builder chains are exempt from strict-rules' `dynamicCallOnStaticMethod` warning (see `phpstan.neon`).
 - Frontend checks are `npm run type-check` and `npm run build`.
 
 ## Backend conventions
 
 - Keep app-level behavior thin and delegate framework behavior to `thinkycz/laravel-core`.
+- Import all PHP class/interface/trait/enum names with `use` statements. Do not write inline fully qualified class names in signatures, route definitions, PHPDoc, catches, callbacks, or method bodies when the symbol can be imported.
+- Do not add model `@property`, `@method`, or `@phpstan-method` PHPDoc to make dynamic Eloquent access pass. Persisted attributes must be read through explicit getters that use `assertString`, `assertInt`, `assertNullableString`, `Typer::*`, or the closest precise assertion.
+- Relations must be accessed through explicit relationship methods for queries or through typed relation getters such as `getStore()` / `getMovementItems()`. Do not read `$model->relation` properties in application code.
+- Call local Eloquent scopes directly, for example `Item::scopeSearch($query, $search)` or inside `tap()` with an explicit static scope call. Do not rely on magic builder methods such as `$query->search()` or `$query->forUser()`.
+- PHPDoc is still allowed for real generic contracts such as relationship return types, `@param Builder<Model>`, and `@use HasFactory<Factory>`.
+- Avoid single-use temporary variables for obvious expressions. Inline trivial values such as `'%' . $search . '%'` and remove unused locals immediately.
 - Use `Thinkycz\LaravelCore\Support\Resolver` for framework helpers when following existing core patterns.
 - Use validity classes such as `AuthValidity` for validation rules.
 - Work with the logged-in user using `User::auth()` and `User::mustAuth()`.
 - API controllers may use `Thinkycz\LaravelCore\Http\ApiFormRequest`; Inertia web controllers should use standard Laravel redirects and validation errors.
+- Use `Thrower::default()->message('field', Typer::assertString(\__('...')))->throw()` instead of `ValidationException::withMessages(...)`.
+- Use `Inertia::flash('success', \__('...'))` instead of `$request->session()->flash(...)` so messages survive 302 → guest-redirect chains.
+- Wrap multi-step persistence (e.g. `update + remember_token + tokens`, `password + revoke`) in `DB::transaction(...)`.
 - DB writes should stay transactional when multi-step persistence is introduced.
+- Code must pass PHPStan without `phpstan-baseline.neon`; fix the underlying type issue instead of suppressing it.
+- Never call `env()` or `\env()` directly, including in config files. Read environment values through `$env = Env::inject();` and the appropriate typed parser/assertion method.
 
 ## Frontend conventions
 
 - Vue pages live in `resources/js/pages` and are resolved by `resources/js/app.ts`.
 - Use `@/` for `resources/js` imports.
 - Prefer small app UI components under `resources/js/components/ui`.
+- TypeScript must reject unused locals and parameters. Keep `noUnusedLocals` and `noUnusedParameters` enabled, and remove confirmed unused imports, locals, and dependencies.
 - Do not introduce a marketing landing page as the default screen; the first useful screen is the auth/dashboard workflow.
 - Keep UI restrained, responsive, and task-focused.
 

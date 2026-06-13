@@ -8,13 +8,14 @@ use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Models\BaseUser;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 use Thinkycz\LaravelCore\Validation\AuthValidity;
 
@@ -54,29 +55,27 @@ class ResetPasswordController
         ]), BaseUser::class);
 
         if ($user instanceof BaseUser === false) {
-            throw ValidationException::withMessages([
-                'email' => \__(PasswordBroker::INVALID_USER),
-            ]);
+            Thrower::default()->message('email', Typer::assertString(\__(PasswordBroker::INVALID_USER)))->throw();
         }
 
         $broker = Resolver::resolvePasswordBroker('users');
 
         if (!$broker->tokenExists($user, $validated->assertString('token'))) {
-            throw ValidationException::withMessages([
-                'token' => \__(PasswordBroker::INVALID_TOKEN),
+            Thrower::default()->message('token', Typer::assertString(\__(PasswordBroker::INVALID_TOKEN)))->throw();
+        }
+
+        DB::transaction(function () use ($user, $validated, $broker): void {
+            $user->update([
+                'password' => $validated->assertString('password'),
             ]);
-        }
 
-        $user->update([
-            'password' => $validated->assertString('password'),
-        ]);
+            if ($user->getRememberToken() !== '') {
+                Resolver::resolveEloquentUserProvider('users')->updateRememberToken($user, Str::random(60));
+            }
 
-        if ($user->getRememberToken() !== '') {
-            Resolver::resolveEloquentUserProvider('users')->updateRememberToken($user, Str::random(60));
-        }
-
-        $user->databaseTokens()->getQuery()->delete();
-        $broker->deleteToken($user);
+            $user->databaseTokens()->getQuery()->delete();
+            $broker->deleteToken($user);
+        });
 
         Resolver::resolveDatabaseTokenGuard('users')->login($user);
 

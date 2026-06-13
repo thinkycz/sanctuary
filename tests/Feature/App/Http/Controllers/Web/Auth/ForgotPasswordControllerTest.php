@@ -36,7 +36,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertOk();
     $response->assertJsonPath('component', 'auth/ForgotPassword');
-    $response->assertSessionHas('success');
+    \assertInertiaFlash($response, 'success', \__('A new password has been sent to your email address.'));
 
     $user->refresh();
 

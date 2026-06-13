@@ -28,7 +28,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertOk();
     $response->assertJsonPath('component', 'auth/VerifyEmail');
-    $response->assertSessionHas('success');
+    \assertInertiaFlash($response, 'success', \__('Verification email sent.'));
 
     Notification::assertSentTo($user, EmailVerificationNotification::class);
 });

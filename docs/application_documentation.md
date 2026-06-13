@@ -12,15 +12,16 @@
 
 ## Packages
 
-| package                         | description                         |
-| ------------------------------- | ----------------------------------- |
-| `thinkycz/laravel-core`         | internal Laravel core package       |
-| `inertiajs/inertia-laravel`     | Laravel server adapter for Inertia  |
-| `@inertiajs/vue3`               | Vue client adapter for Inertia      |
-| `@inertiajs/vite`               | Inertia Vite integration            |
-| `vue`                           | frontend framework                  |
-| `tailwindcss`                   | styling system                      |
-| `class-variance-authority/clsx` | shadcn-vue-compatible class helpers |
+| package                     | description                           |
+| --------------------------- | ------------------------------------- |
+| `thinkycz/laravel-core`     | internal Laravel core package         |
+| `inertiajs/inertia-laravel` | Laravel server adapter for Inertia    |
+| `@inertiajs/vue3`           | Vue client adapter for Inertia        |
+| `@inertiajs/vite`           | Inertia Vite integration              |
+| `vue`                       | frontend framework                    |
+| `tailwindcss`               | styling system                        |
+| `clsx`                      | class name composition helper         |
+| `tailwind-merge`            | resolves conflicting Tailwind classes |
 
 ## Runtime services
 
@@ -35,7 +36,7 @@
     - `/login`, `/register`, `/forgot-password`, `/reset-password`
     - `/dashboard`
     - `/verify-email`
-    - `/settings/profile`, `/settings/password`
+    - `/settings` (unified profile + password page)
 - Minimal API compatibility:
     - `/api/v1/auth/*`
     - `/api/v1/me/*`

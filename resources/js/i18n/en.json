@@ -6,10 +6,16 @@
         "skip_to_main": "Skip to main content",
         "dashboard": "Dashboard",
         "settings": "Settings",
-        "logout": "Log out"
+        "logout": "Log out",
+        "new_chat": "New Chat",
+        "history": "Conversations",
+        "delete_chat": "Delete Conversation"
     },
     "brand": {
         "subtitle": "Starter Kit"
+    },
+    "conversations": {
+        "delete_confirm": "Are you sure you want to delete this conversation?"
     },
     "auth": {
         "login": {
@@ -67,7 +73,15 @@
         "welcome": "Authenticated user",
         "settings_heading": "Settings",
         "settings_description": "The app is using the reference database-token cookie guard.",
-        "manage_profile": "Manage profile"
+        "manage_profile": "Manage profile",
+        "how_can_i_help": "How can I help you today?",
+        "chat_description": "Start an interactive chat session with your AI Agent. This stack is optimized with Laravel AI SDK and OpenRouter.",
+        "type_message": "Type a message...",
+        "suggestions": {
+            "inertia": "Explain Inertia.js like I'm five",
+            "route": "Write a Laravel route setup for a REST API",
+            "schema": "Design a database schema for an online store"
+        }
     },
     "fields": {
         "email": "Email",
@@ -75,7 +89,9 @@
         "password_confirmation": "Confirm password",
         "current_password": "Current password",
         "new_password": "New password",
-        "locale": "Locale"
+        "locale": "Locale",
+        "user": "You",
+        "assistant": "Assistant"
     },
     "locale": {
         "switcher_label": "Language",

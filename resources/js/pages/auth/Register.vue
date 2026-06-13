@@ -14,6 +14,7 @@ import { useSharedProps } from '@/composables/useSharedProps';
 type RegisterFields = {
     email: string;
     password: string;
+    password_confirmation: string;
     locale: string;
 };
 
@@ -39,7 +40,7 @@ const localeOptions = computed(() =>
             v-slot="{ errors, processing }"
             action="/register"
             method="post"
-            :reset-on-error="['password']"
+            :reset-on-error="['password', 'password_confirmation']"
             class="space-y-5"
         >
             <div class="space-y-2">
@@ -78,6 +79,28 @@ const localeOptions = computed(() =>
                                 ? RegisterFields
                                 : never
                         )['password']
+                    "
+                />
+            </div>
+
+            <div class="space-y-2">
+                <Label for="password_confirmation">{{
+                    t('fields.password_confirmation')
+                }}</Label>
+                <Input
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    type="password"
+                    autocomplete="new-password"
+                    required
+                />
+                <FieldError
+                    :message="
+                        (
+                            errors as RegisterFields extends object
+                                ? RegisterFields
+                                : never
+                        )['password_confirmation']
                     "
                 />
             </div>
