@@ -92,6 +92,10 @@
     "errors": {
         "failed_response": "Nepodařilo se vygenerovat odpověď. Zkuste to prosím znovu."
     },
+    "agent": {
+        "clarification_hint": "Vyberte možnost, která nejlépe odpovídá vašemu záměru.",
+        "recommended": "Doporučeno"
+    },
     "locale": {
         "en": "Angličtina",
         "cs": "Čeština",

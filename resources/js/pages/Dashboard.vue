@@ -7,6 +7,7 @@ import { Send, Sparkles, Bot, User } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useActiveConversation } from '@/composables/useActiveConversation';
+import { parseTextDeltaSseChunk } from '@/lib/sse';
 
 interface LocalMessage extends ChatMessage {
     id: string;
@@ -203,69 +204,78 @@ async function submitMessage() {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';
+        let sseBuffer = '';
+        let streamDone = false;
+        let streamError: string | null = null;
+        let doneConversationId: string | null = null;
 
-        while (true) {
+        while (!streamDone && streamError === null) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
+            const chunk = decoder.decode(value, { stream: true });
+            const parsed = parseTextDeltaSseChunk(chunk, sseBuffer);
+            sseBuffer = parsed.buffer;
 
-            for (const line of lines) {
-                const cleaned = line.trim();
-                if (!cleaned || !cleaned.startsWith('data: ')) continue;
-                const dataStr = cleaned.slice(6);
+            for (const delta of parsed.deltas) {
+                localMessages.value[assistantMsgIndex].content =
+                    (localMessages.value[assistantMsgIndex].content ?? '') +
+                    delta;
+                scrollToBottom();
+            }
 
-                let data: unknown;
+            // Backend emits a JSON `done` event of the shape
+            // `{ type: "done", conversation_id: "<uuid>" }`. Extract
+            // the id by scanning the chunk's data rows once.
+            for (const line of chunk.split('\n')) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith('data: ')) continue;
+                const payload = trimmed.slice(6);
+                if (payload === '[DONE]') {
+                    streamDone = true;
+                    continue;
+                }
                 try {
-                    data = JSON.parse(dataStr);
-                } catch {
-                    // Ignore parsing errors for incomplete data chunks
-                    continue;
-                }
-
-                if (
-                    typeof data !== 'object' ||
-                    data === null ||
-                    !('type' in data)
-                ) {
-                    continue;
-                }
-
-                if (data.type === 'text_delta' && 'delta' in data) {
-                    localMessages.value[assistantMsgIndex].content =
-                        (localMessages.value[assistantMsgIndex].content ?? '') +
-                        String(data.delta);
-                    scrollToBottom();
-                } else if (data.type === 'error') {
-                    throw new Error(
-                        'message' in data && typeof data.message === 'string'
-                            ? data.message
-                            : t('errors.failed_response'),
-                    );
-                } else if (
-                    data.type === 'done' &&
-                    'conversation_id' in data &&
-                    typeof data.conversation_id === 'string'
-                ) {
-                    const newId = data.conversation_id;
-                    // Clear the pending state and navigate properly now that
-                    // streaming is complete.
-                    pendingConversationId.value = null;
+                    const obj = JSON.parse(payload) as {
+                        type?: unknown;
+                        conversation_id?: unknown;
+                    };
                     if (
-                        !props.conversation ||
-                        props.conversation.id !== newId
+                        obj.type === 'done' &&
+                        typeof obj.conversation_id === 'string'
                     ) {
-                        router.visit(`/conversations/${newId}`, {
-                            preserveScroll: true,
-                            replace: true,
-                        });
-                    } else {
-                        router.reload();
+                        doneConversationId = obj.conversation_id;
+                    } else if (
+                        obj.type === 'error' &&
+                        typeof (obj as { message?: unknown }).message ===
+                            'string'
+                    ) {
+                        streamError = (obj as { message: string }).message;
                     }
+                } catch {
+                    // Incomplete JSON; the parser already dropped it.
                 }
+            }
+
+            if (parsed.done) {
+                streamDone = true;
+            }
+        }
+
+        if (streamError !== null) {
+            throw new Error(streamError);
+        }
+
+        if (doneConversationId !== null) {
+            const newId = doneConversationId;
+            pendingConversationId.value = null;
+            if (!props.conversation || props.conversation.id !== newId) {
+                router.visit(`/conversations/${newId}`, {
+                    preserveScroll: true,
+                    replace: true,
+                });
+            } else {
+                router.reload();
             }
         }
     } catch (e: unknown) {

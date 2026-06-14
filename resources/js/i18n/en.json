@@ -92,6 +92,10 @@
     "errors": {
         "failed_response": "Failed to generate response. Please try again."
     },
+    "agent": {
+        "clarification_hint": "Pick the option that best matches your intent.",
+        "recommended": "Recommended"
+    },
     "locale": {
         "en": "English",
         "cs": "Čeština",

@@ -44,6 +44,18 @@ export interface ChatConversation {
     messages: ChatMessage[];
 }
 
+/**
+ * A multiple-choice clarification produced by the
+ * AskClarifyingQuestionsTool. `recommended_option` is the option text
+ * the agent recommends (not its index) and may be null when the agent
+ * does not express a preference.
+ */
+export interface AgentClarification {
+    question: string;
+    options: string[];
+    recommended_option: string | null;
+}
+
 export interface SharedProps {
     [key: string]: unknown;
 

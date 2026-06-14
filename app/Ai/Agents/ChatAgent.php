@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Ai\Tools\AskClarifyingQuestionsTool;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -40,6 +41,6 @@ class ChatAgent implements Agent, Conversational, HasTools
      */
     public function tools(): iterable
     {
-        yield from [];
+        yield new AskClarifyingQuestionsTool();
     }
 }
