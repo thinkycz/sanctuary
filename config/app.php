@@ -144,4 +144,20 @@ return [
         'driver' => $env->parseNullableString('APP_MAINTENANCE_DRIVER') ?? 'file',
         'store' => $env->parseNullableString('APP_MAINTENANCE_STORE') ?? 'database',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | End-to-end testing flags
+    |--------------------------------------------------------------------------
+    |
+    | Toggles consumed by the application during end-to-end (Playwright)
+    | runs. Reading through Config::inject() rather than Env::inject() keeps
+    | the values stable across `php artisan config:cache` and the
+    | configuration:clear/migrate:fresh sequence the e2e harness runs.
+    |
+    */
+
+    'e2e' => [
+        'disable_throttle' => $env->parseNullableBool('E2E_DISABLE_THROTTLE') ?? false,
+    ],
 ];

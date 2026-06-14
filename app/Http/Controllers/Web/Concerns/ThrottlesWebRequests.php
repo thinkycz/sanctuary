@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Web\Concerns;
 use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
 use Thinkycz\LaravelCore\Http\RequestSignature;
-use Thinkycz\LaravelCore\Support\Env;
+use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\ThrottleSupport;
 
 trait ThrottlesWebRequests
@@ -31,7 +31,7 @@ trait ThrottlesWebRequests
      */
     protected function hit(Limit $limit, Closure|null $onError = null): Closure
     {
-        if (Env::inject()->parseBool('E2E_DISABLE_THROTTLE') === true) {
+        if (Config::inject()->parseBool('app.e2e.disable_throttle') === true) {
             return static function (): void {};
         }
 
