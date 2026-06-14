@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\Agent\AgentRunCancelController;
+use App\Http\Controllers\Web\Agent\AgentRunStartController;
+use App\Http\Controllers\Web\Agent\AgentRunStreamController;
 use App\Http\Controllers\Web\Auth\EmailVerificationConfirmController;
 use App\Http\Controllers\Web\Auth\ForgotPasswordController;
 use App\Http\Controllers\Web\Auth\LoginController;
@@ -55,4 +58,8 @@ Resolver::resolveRouteRegistrar()
         $router->post('conversations', [ConversationController::class, 'store']);
         $router->post('conversations/{id}/messages', [ConversationController::class, 'storeMessage']);
         $router->delete('conversations/{id}', [ConversationController::class, 'destroy']);
+
+        $router->post('agent/runs', AgentRunStartController::class);
+        $router->post('agent/runs/cancel', AgentRunCancelController::class);
+        $router->get('agent/runs/stream', AgentRunStreamController::class);
     });
