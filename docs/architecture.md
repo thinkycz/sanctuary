@@ -83,42 +83,50 @@ flowchart LR
 ```
 
 - Cookie is HTTP-only and named via the `database_token` config.
-- The guard stores `(user_id, token_hash, expires_at)` in the
-  `database_tokens` table.
-- `LogoutController::destroy` revokes the token row via
-  `$user->databaseTokens()->getQuery()->delete()` before invalidating the
-  session.
+- The guard stores `(user_id, token_hash)` in the `database_tokens`
+  table. **Tokens are permanent until the user explicitly logs out** —
+  there is no `expires_at` column and the guard does not perform
+  sliding-expiry rotation. Adding real expiry is a deliberate deferred
+  hardening item; see the `database_tokens` migration.
+- `LogoutController::destroy` revokes **only the current** token row
+  via `Resolver::resolveDatabaseTokenGuard('users')->logout()` before
+  invalidating the session. Other devices stay signed in.
 
 ## Frontend layout
 
 ```
 resources/js/
 ├── app.ts                  # Inertia app bootstrap
-├── bootstrap.ts            # Axios + CSRF setup
 ├── components/
-│   └── ui/                 # FieldError, FlashAlerts, Select, Input, Button
+│   └── ui/                 # FieldError, FlashAlerts, Select, Input, Button, Alert, Brand
 ├── composables/
-│   └── useSharedProps.ts   # typed accessor for shared props
+│   ├── useActiveConversation.ts
+│   ├── useBoundLocale.ts
+│   ├── useFieldError.ts
+│   └── useSharedProps.ts
+├── i18n/                   # en, cs, sk JSON plus a `createAppI18n` helper
 ├── layouts/
 │   ├── AppLayout.vue       # authenticated shell
 │   └── AuthLayout.vue      # guest shell
 ├── lib/                    # framework-agnostic helpers
 ├── pages/                  # Inertia page components
 └── types/
-    └── index.ts            # AuthUser, AppMeta, FlashProps, SharedProps
+    └── index.ts            # AuthUser, AppMeta, FlashProps, ChatMessage, ChatConversation, SharedProps
 ```
 
 Pages import shared props via `useSharedProps()` and render them with the
-`ui/` primitives. Forms use `@inertiajs/vue3`'s `useForm()` for typed
+`ui/` primitives. Forms use `@inertiajs/vue3`'s `<Form>` for typed
 client-side state; validation errors arrive via page props after the 422
-handshake above.
+handshake above. Each form input is wired to its error message via
+`fieldError(errors, field, formId)`, which produces
+`aria-describedby`/`aria-invalid` props for accessibility.
 
 ## Local packages
 
 - `packages/thinkycz/laravel-core/` — the framework helper. Provides
-  `Resolver`, `Config`, `Env`, `Typer`, `AuthValidity`, `Thrower`, `Parser`,
-  `DatabaseToken`, `EmailBrokerService`, `AuthShouldUseMiddleware`,
-  `SetPreferredLanguageMiddleware`, and the
+  `Resolver`, `Config`, `Env`, `Typer`, `AuthTiming`, `AuthValidity`,
+  `Thrower`, `Parser`, `DatabaseToken`, `EmailBrokerService`,
+  `AuthShouldUseMiddleware`, `SetPreferredLanguageMiddleware`, and the
   `Illuminate\Contracts\Debug\ExceptionHandler` binding.
 
 App-level code should not re-implement what core already exposes. Use core
@@ -126,10 +134,12 @@ helpers before introducing new ones.
 
 ## Storage
 
-- Sessions: file driver in dev, configurable in `config/session.php`. E2e
-  dev server runs with `SESSION_SECURE_COOKIE=false` and `APP_ENV=testing`.
-- Cache: `array` in tests, `file` in dev, `redis` in production
-  (per `config/cache.php`).
+- Sessions: `file` under `local`, `array` under `testing`, `redis`
+  under `development`/`staging`/`production` (see
+  `config/session.php`). E2e dev server runs with
+  `SESSION_SECURE_COOKIE=false` and `APP_ENV=testing`.
+- Cache: `array` in tests, `file` in dev, `redis` in
+  `development`/`staging`/`production` (per `config/cache.php`).
 - Database: MySQL 8 in production; SQLite `:memory:` in tests.
 
 ## Runtime services

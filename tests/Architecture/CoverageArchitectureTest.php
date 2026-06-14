@@ -14,7 +14,9 @@ declare(strict_types=1);
  * excluded.
  */
 \arch('every web controller has a feature test', function (): void {
-    $controllerFiles = \glob(\base_path('app/Http/Controllers/Web/*/*.php')) ?: [];
+    $nestedFiles = \glob(\base_path('app/Http/Controllers/Web/*/*.php')) ?: [];
+    $topLevelFiles = \glob(\base_path('app/Http/Controllers/Web/*.php')) ?: [];
+    $controllerFiles = [...$nestedFiles, ...$topLevelFiles];
 
     foreach ($controllerFiles as $file) {
         $parent = \basename(\dirname($file));

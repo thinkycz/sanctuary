@@ -90,10 +90,9 @@ When in doubt, read the test that enforces the rule.
 - Test files mirror the source tree:
   `app/Http/Controllers/Web/Auth/LoginController.php` →
   `tests/Feature/App/Http/Controllers/Web/Auth/LoginControllerTest.php`.
-- Use the `createIsolatedUserWithWarehouse()` helper from `tests/Pest.php`
-  to set up a user with their default warehouse store.
-- Prefer factories over direct `Model::query()->create([...])` calls
-  once the controller uses the factory pattern.
+- Use the `UserFactory` to create users in tests; reach for
+  `User::query()->create([...])` only when exercising persistence
+  paths that need a real database row rather than a factory state.
 - The `assertInertiaFlash(TestResponse $response, string $key, mixed
 $message)` helper asserts Inertia flash messages for both
   redirect and 200-OK render responses.
@@ -208,19 +207,21 @@ $message)` helper asserts Inertia flash messages for both
 
 - Authorization and validation in the controller, not in request
   classes.
-- **[Web]** Validation rules live in `App\Http\Validity\*Validity`
-  classes; inject with `*Validity::inject($user->getKey())` (or
-  `$model->getUserId()` for edit flows) and use
-  `$this->validateRequest($request, $rules)` to obtain a typed
-  `Parser` for `assertString/assertNullableInt/...`.
-- **[API]** Validation rules live in
-  `App\Http\Validation\*Validity` classes too; the API controller
-  passes them to the `ApiFormRequest::builder()`.
+- **[Web]** Validation rules live in
+  `Thinkycz\LaravelCore\Validation\AuthValidity` (and any project-
+  specific `*Validity` classes that extend it). Inject with
+  `*Validity::inject()` and use `$this->validateRequest($request,
+$rules)` (from `App\Http\Controllers\Web\Concerns\ValidatesWebRequests`)
+  to obtain a typed `Parser` for `assertString/assertNullableInt/...`.
+- **[API]** Validation rules use the same `AuthValidity` helpers; the
+  API controller passes them to the `ApiFormRequest::builder()`.
 - Multi-step writes (`create + related`, `update + tokens`,
   `password + revoke`) must run in `DB::transaction(...)`.
-- All queries must be scoped to the logged-in user via the
-  `BelongsToUser` trait's `->forUser($user)` scope (or a relation
-  through an already-scoped parent).
+- All queries must be scoped to the logged-in user via explicit
+  ownership checks (e.g. `ConversationRepository::findOwned($id,
+$user)`) or Eloquent relationship methods that take the user as
+  a parameter. There is no global `->forUser()` scope — call out
+  ownership at the call site so the intent is obvious.
 - Forbids `ValidationException::withMessages(...)`. Use
   `Thrower::default()->message($key, $message)->throw()`.
 - Forbids `env()`, `config()`, `dd()`, `var_dump()`, `print_r()`,

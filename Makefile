@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 # Variables
-MAKE_PHP ?= php -d zend.assertions=1
+MAKE_PHP ?= php -d zend.assertions=1 -d memory_limit=1G
 MAKE_COMPOSER ?= composer
 MAKE_ARTISAN ?= ${MAKE_PHP} ./artisan
 
@@ -22,7 +22,7 @@ audit: ./vendor ./composer.lock ./node_modules ./package-lock.json
 
 .PHONY: stan
 stan: ./vendor/bin/phpstan
-	${MAKE_PHP} ./vendor/bin/phpstan analyse
+	${MAKE_PHP} ./vendor/bin/phpstan analyse --memory-limit=1G
 
 .PHONY: frontend
 frontend: ./node_modules
