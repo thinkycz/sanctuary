@@ -60,24 +60,19 @@
         "subtitle": "Manage your account preferences.",
         "profile": {
             "title": "Profile",
-            "submit": "Save profile",
-            "change_password": "Change password"
+            "submit": "Save profile"
         },
         "password": {
             "title": "Password",
-            "submit": "Update password",
-            "back_to_profile": "Back to profile"
+            "submit": "Update password"
         }
     },
     "dashboard": {
         "title": "Dashboard",
-        "welcome": "Authenticated user",
-        "settings_heading": "Settings",
-        "settings_description": "The app is using the reference database-token cookie guard.",
-        "manage_profile": "Manage profile",
         "how_can_i_help": "How can I help you today?",
         "chat_description": "Start an interactive chat session with your AI Agent. This stack is optimized with Laravel AI SDK and OpenRouter.",
         "type_message": "Type a message...",
+        "send": "Send message",
         "suggestions": {
             "inertia": "Explain Inertia.js like I'm five",
             "route": "Write a Laravel route setup for a REST API",
@@ -98,7 +93,6 @@
         "failed_response": "Failed to generate response. Please try again."
     },
     "locale": {
-        "switcher_label": "Language",
         "en": "English",
         "cs": "Čeština",
         "sk": "Slovenčina"

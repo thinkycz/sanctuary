@@ -10,13 +10,7 @@ import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useSharedProps } from '@/composables/useSharedProps';
-
-type RegisterFields = {
-    email: string;
-    password: string;
-    password_confirmation: string;
-    locale: string;
-};
+import { fieldError } from '@/composables/useFieldError';
 
 const { app } = useSharedProps();
 const { t, te } = useI18n();
@@ -50,17 +44,13 @@ const localeOptions = computed(() =>
                     name="email"
                     type="email"
                     autocomplete="email"
+                    :invalid="fieldError(errors, 'email', 'register').invalid"
+                    :described-by="
+                        fieldError(errors, 'email', 'register').describedBy
+                    "
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
-                        )['email']
-                    "
-                />
+                <FieldError v-bind="fieldError(errors, 'email', 'register')" />
             </div>
 
             <div class="space-y-2">
@@ -70,16 +60,16 @@ const localeOptions = computed(() =>
                     name="password"
                     type="password"
                     autocomplete="new-password"
+                    :invalid="
+                        fieldError(errors, 'password', 'register').invalid
+                    "
+                    :described-by="
+                        fieldError(errors, 'password', 'register').describedBy
+                    "
                     required
                 />
                 <FieldError
-                    :message="
-                        (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
-                        )['password']
-                    "
+                    v-bind="fieldError(errors, 'password', 'register')"
                 />
             </div>
 
@@ -92,15 +82,19 @@ const localeOptions = computed(() =>
                     name="password_confirmation"
                     type="password"
                     autocomplete="new-password"
+                    :invalid="
+                        fieldError(errors, 'password_confirmation', 'register')
+                            .invalid
+                    "
+                    :described-by="
+                        fieldError(errors, 'password_confirmation', 'register')
+                            .describedBy
+                    "
                     required
                 />
                 <FieldError
-                    :message="
-                        (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
-                        )['password_confirmation']
+                    v-bind="
+                        fieldError(errors, 'password_confirmation', 'register')
                     "
                 />
             </div>
@@ -112,17 +106,13 @@ const localeOptions = computed(() =>
                     name="locale"
                     :options="localeOptions"
                     :default-value="app.locale"
+                    :invalid="fieldError(errors, 'locale', 'register').invalid"
+                    :described-by="
+                        fieldError(errors, 'locale', 'register').describedBy
+                    "
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
-                        )['locale']
-                    "
-                />
+                <FieldError v-bind="fieldError(errors, 'locale', 'register')" />
             </div>
 
             <Button type="submit" class="w-full" :disabled="processing">{{

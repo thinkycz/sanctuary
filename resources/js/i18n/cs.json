@@ -60,24 +60,19 @@
         "subtitle": "Spravujte předvolby svého účtu.",
         "profile": {
             "title": "Profil",
-            "submit": "Uložit profil",
-            "change_password": "Změnit heslo"
+            "submit": "Uložit profil"
         },
         "password": {
             "title": "Heslo",
-            "submit": "Aktualizovat heslo",
-            "back_to_profile": "Zpět na profil"
+            "submit": "Aktualizovat heslo"
         }
     },
     "dashboard": {
         "title": "Nástěnka",
-        "welcome": "Přihlášený uživatel",
-        "settings_heading": "Nastavení",
-        "settings_description": "Aplikace používá referenční database-token cookie guard.",
-        "manage_profile": "Spravovat profil",
         "how_can_i_help": "Jak vám dnes mohu pomoci?",
         "chat_description": "Zahajte interaktivní chat s vaším AI agentem. Tento zásobník je optimalizován pomocí Laravel AI SDK a OpenRouteru.",
         "type_message": "Napište zprávu...",
+        "send": "Odeslat zprávu",
         "suggestions": {
             "inertia": "Vysvětli Inertia.js, jako by mi bylo pět let",
             "route": "Napiš definici Laravel routy pro REST API",
@@ -98,7 +93,6 @@
         "failed_response": "Nepodařilo se vygenerovat odpověď. Zkuste to prosím znovu."
     },
     "locale": {
-        "switcher_label": "Jazyk",
         "en": "Angličtina",
         "cs": "Čeština",
         "sk": "Slovenčina"

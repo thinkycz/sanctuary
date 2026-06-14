@@ -6,11 +6,9 @@ import { useSharedProps } from '@/composables/useSharedProps';
 withDefaults(
     defineProps<{
         href?: string;
-        class?: string;
     }>(),
     {
         href: '/',
-        class: '',
     },
 );
 
@@ -19,13 +17,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <Link
-        :href="href"
-        :class="[
-            'flex items-center gap-3 font-medium select-none',
-            $props.class,
-        ]"
-    >
+    <Link :href="href" class="flex items-center gap-3 font-medium select-none">
         <div
             class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-base font-bold text-white shadow-[0_2px_8px_rgba(15,23,42,0.2)]"
         >

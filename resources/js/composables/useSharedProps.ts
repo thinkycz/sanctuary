@@ -14,5 +14,6 @@ export function useSharedProps() {
         flashSuccess: computed(() => page.props.flash?.success ?? null),
         flashError: computed(() => page.props.flash?.error ?? null),
         errors: computed(() => page.props.errors),
+        activeUrl: computed(() => page.url),
     };
 }

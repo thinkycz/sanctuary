@@ -7,11 +7,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
-
-type LoginFields = {
-    email: string;
-    password: string;
-};
+import { fieldError } from '@/composables/useFieldError';
 
 const { t } = useI18n();
 
@@ -36,17 +32,13 @@ useBoundLocale();
                     name="email"
                     type="email"
                     autocomplete="email"
+                    :invalid="fieldError(errors, 'email', 'login').invalid"
+                    :described-by="
+                        fieldError(errors, 'email', 'login').describedBy
+                    "
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as LoginFields extends object
-                                ? LoginFields
-                                : never
-                        )['email']
-                    "
-                />
+                <FieldError v-bind="fieldError(errors, 'email', 'login')" />
             </div>
 
             <div class="space-y-2">
@@ -63,17 +55,13 @@ useBoundLocale();
                     name="password"
                     type="password"
                     autocomplete="current-password"
+                    :invalid="fieldError(errors, 'password', 'login').invalid"
+                    :described-by="
+                        fieldError(errors, 'password', 'login').describedBy
+                    "
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as LoginFields extends object
-                                ? LoginFields
-                                : never
-                        )['password']
-                    "
-                />
+                <FieldError v-bind="fieldError(errors, 'password', 'login')" />
             </div>
 
             <Button type="submit" class="w-full" :disabled="processing">{{

@@ -11,7 +11,7 @@ const props = withDefaults(
 );
 
 const variants = {
-    success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700',
+    success: 'border-success/30 bg-success/10 text-success',
     error: 'border-error-red/30 bg-error-red/10 text-error-red',
     info: 'border-outline-glass bg-surface-container-low text-on-surface-variant',
 };

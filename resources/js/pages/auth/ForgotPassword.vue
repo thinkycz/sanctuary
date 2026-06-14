@@ -7,10 +7,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
-
-type ForgotPasswordFields = {
-    email: string;
-};
+import { fieldError } from '@/composables/useFieldError';
 
 const { t } = useI18n();
 
@@ -35,17 +32,13 @@ useBoundLocale();
                     name="email"
                     type="email"
                     autocomplete="email"
+                    :invalid="fieldError(errors, 'email', 'forgot').invalid"
+                    :described-by="
+                        fieldError(errors, 'email', 'forgot').describedBy
+                    "
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as ForgotPasswordFields extends object
-                                ? ForgotPasswordFields
-                                : never
-                        )['email']
-                    "
-                />
+                <FieldError v-bind="fieldError(errors, 'email', 'forgot')" />
             </div>
 
             <Button type="submit" class="w-full" :disabled="processing">{{

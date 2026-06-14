@@ -1,32 +1,19 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onBeforeUnmount } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import type { SharedProps } from '@/types';
+import type { ChatConversation, ChatMessage, SharedProps } from '@/types';
 import { useI18n } from 'vue-i18n';
 import { Send, Sparkles, Bot, User } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useActiveConversation } from '@/composables/useActiveConversation';
 
-interface Message {
-    role: 'user' | 'assistant';
-    content: string;
-}
-
-interface LocalMessage {
+interface LocalMessage extends ChatMessage {
     id: string;
-    role: 'user' | 'assistant';
-    content: string;
-}
-
-interface Conversation {
-    id: string;
-    title: string;
-    messages: Message[];
 }
 
 const props = defineProps<{
-    conversation?: Conversation;
+    conversation?: ChatConversation;
 }>();
 
 const { t } = useI18n();
@@ -230,7 +217,6 @@ async function submitMessage() {
                 const cleaned = line.trim();
                 if (!cleaned || !cleaned.startsWith('data: ')) continue;
                 const dataStr = cleaned.slice(6);
-                if (dataStr === '[DONE]') continue;
 
                 let data: unknown;
                 try {
@@ -249,9 +235,9 @@ async function submitMessage() {
                 }
 
                 if (data.type === 'text_delta' && 'delta' in data) {
-                    localMessages.value[assistantMsgIndex].content += String(
-                        data.delta,
-                    );
+                    localMessages.value[assistantMsgIndex].content =
+                        (localMessages.value[assistantMsgIndex].content ?? '') +
+                        String(data.delta);
                     scrollToBottom();
                 } else if (data.type === 'error') {
                     throw new Error(
@@ -346,8 +332,8 @@ watch(
                         <p class="text-xs font-bold text-on-surface">
                             {{
                                 msg.role === 'user'
-                                    ? t('fields.user') || 'You'
-                                    : t('fields.assistant') || 'Assistant'
+                                    ? t('fields.user')
+                                    : t('fields.assistant')
                             }}
                         </p>
                         <!-- Message Content -->
@@ -397,10 +383,7 @@ watch(
                     <h2
                         class="font-heading text-2xl font-black tracking-tight text-on-surface md:text-3xl"
                     >
-                        {{
-                            t('dashboard.how_can_i_help') ||
-                            'How can I help you today?'
-                        }}
+                        {{ t('dashboard.how_can_i_help') }}
                     </h2>
                     <p
                         class="text-xs text-on-surface-variant font-medium max-w-md"
@@ -442,15 +425,17 @@ watch(
                         ref="chatTextarea"
                         v-model="inputMessage"
                         rows="1"
-                        :placeholder="
-                            t('dashboard.type_message') || 'Type a message...'
-                        "
+                        :placeholder="t('dashboard.type_message')"
                         class="flex-1 resize-none bg-transparent py-2 px-3 text-xs outline-none text-on-surface placeholder:text-on-surface-variant/50 max-h-32 overflow-y-auto scrollbar-none"
-                        @keydown.enter.exact.prevent="submitMessage"
+                        @keydown.enter.exact="submitMessage"
+                        @keydown.enter.shift.exact.prevent
+                        @keydown.enter.meta.exact.prevent="submitMessage"
+                        @keydown.enter.ctrl.exact.prevent="submitMessage"
                     ></textarea>
                     <button
                         type="submit"
                         :disabled="!inputMessage.trim() || localProcessing"
+                        :aria-label="t('dashboard.send')"
                         class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-container cursor-pointer shrink-0"
                     >
                         <Send :size="14" />

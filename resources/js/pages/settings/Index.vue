@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -10,16 +10,7 @@ import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useSharedProps } from '@/composables/useSharedProps';
-
-type ProfileFields = {
-    email: string;
-    locale: string;
-};
-
-type PasswordFields = {
-    password: string;
-    new_password: string;
-};
+import { fieldError } from '@/composables/useFieldError';
 
 const { user, app } = useSharedProps();
 const { t, te } = useI18n();
@@ -36,8 +27,6 @@ const localeOptions = computed(() =>
 
 <template>
     <AppLayout :title="t('settings.title')">
-        <Head :title="t('settings.title')" />
-
         <div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
             <header>
                 <h1
@@ -72,16 +61,17 @@ const localeOptions = computed(() =>
                             type="email"
                             autocomplete="email"
                             :default-value="user?.email ?? ''"
+                            :invalid="
+                                fieldError(errors, 'email', 'profile').invalid
+                            "
+                            :described-by="
+                                fieldError(errors, 'email', 'profile')
+                                    .describedBy
+                            "
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ProfileFields extends object
-                                        ? ProfileFields
-                                        : never
-                                )['email']
-                            "
+                            v-bind="fieldError(errors, 'email', 'profile')"
                         />
                     </div>
 
@@ -92,16 +82,17 @@ const localeOptions = computed(() =>
                             name="locale"
                             :options="localeOptions"
                             :default-value="user?.locale ?? app.locale"
+                            :invalid="
+                                fieldError(errors, 'locale', 'profile').invalid
+                            "
+                            :described-by="
+                                fieldError(errors, 'locale', 'profile')
+                                    .describedBy
+                            "
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ProfileFields extends object
-                                        ? ProfileFields
-                                        : never
-                                )['locale']
-                            "
+                            v-bind="fieldError(errors, 'locale', 'profile')"
                         />
                     </div>
 
@@ -139,16 +130,18 @@ const localeOptions = computed(() =>
                             name="password"
                             type="password"
                             autocomplete="current-password"
+                            :invalid="
+                                fieldError(errors, 'password', 'password')
+                                    .invalid
+                            "
+                            :described-by="
+                                fieldError(errors, 'password', 'password')
+                                    .describedBy
+                            "
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as PasswordFields extends object
-                                        ? PasswordFields
-                                        : never
-                                )['password']
-                            "
+                            v-bind="fieldError(errors, 'password', 'password')"
                         />
                     </div>
 
@@ -161,15 +154,19 @@ const localeOptions = computed(() =>
                             name="new_password"
                             type="password"
                             autocomplete="new-password"
+                            :invalid="
+                                fieldError(errors, 'new_password', 'password')
+                                    .invalid
+                            "
+                            :described-by="
+                                fieldError(errors, 'new_password', 'password')
+                                    .describedBy
+                            "
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as PasswordFields extends object
-                                        ? PasswordFields
-                                        : never
-                                )['new_password']
+                            v-bind="
+                                fieldError(errors, 'new_password', 'password')
                             "
                         />
                     </div>

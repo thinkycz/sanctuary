@@ -22,6 +22,28 @@ export interface ConversationItem {
     updated_at: string;
 }
 
+/**
+ * A single chat message as serialized by `ConversationRepository`.
+ *
+ * `role` is intentionally a string (not a narrow union) because the
+ * AI SDK may emit values such as `system` or `tool` that the frontend
+ * does not branch on. `content` is nullable because persisted rows
+ * may carry a `null` content (e.g. tool-call placeholders).
+ */
+export interface ChatMessage {
+    role: string;
+    content: string | null;
+}
+
+/**
+ * The conversation payload rendered on the dashboard.
+ */
+export interface ChatConversation {
+    id: string;
+    title: string;
+    messages: ChatMessage[];
+}
+
 export interface SharedProps {
     [key: string]: unknown;
 

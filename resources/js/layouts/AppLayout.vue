@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     Activity,
     Settings as SettingsIcon,
@@ -20,14 +20,12 @@ defineProps<{
     title: string;
 }>();
 
-const { auth, conversations } = useSharedProps();
+const { auth, conversations, activeUrl } = useSharedProps();
 const { t } = useI18n();
 const { pendingConversationId } = useActiveConversation();
 const mobileHistoryOpen = ref(false);
 
 useBoundLocale();
-
-const activeUrl = computed(() => usePage().url);
 
 const activeConversationId = computed(() => {
     // While a new conversation is streaming, use the pending ID so the sidebar
@@ -46,8 +44,14 @@ const currentTab = computed(() => {
 
 const userInitials = computed(() => {
     const email = auth.value.user?.email ?? '';
-    if (!email) return 'DU';
+    if (!email) return '';
     return email.substring(0, 2).toUpperCase();
+});
+
+const userLabel = computed(() => {
+    const user = auth.value.user;
+    if (!user) return t('fields.user');
+    return user.email.split('@')[0];
 });
 
 function logout(): void {
@@ -55,12 +59,7 @@ function logout(): void {
 }
 
 function deleteConversation(id: string): void {
-    if (
-        confirm(
-            t('conversations.delete_confirm') ||
-                'Are you sure you want to delete this conversation?',
-        )
-    ) {
+    if (confirm(t('conversations.delete_confirm'))) {
         router.delete(`/conversations/${id}`);
     }
 }
@@ -72,6 +71,13 @@ function closeMobileHistory(): void {
 
 <template>
     <Head :title="title" />
+
+    <a
+        href="#main-content"
+        class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-xs focus:font-bold focus:text-white"
+    >
+        {{ t('nav.skip_to_main') }}
+    </a>
 
     <div
         class="flex h-screen flex-col overflow-hidden bg-surface-bg font-sans antialiased md:flex-row"
@@ -119,7 +125,7 @@ function closeMobileHistory(): void {
                     <p
                         class="px-3 mb-2 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase opacity-75"
                     >
-                        {{ t('nav.history') || 'History' }}
+                        {{ t('nav.history') }}
                     </p>
                     <TransitionGroup name="list" tag="div" class="space-y-1">
                         <div
@@ -141,11 +147,8 @@ function closeMobileHistory(): void {
                             </Link>
                             <button
                                 @click.stop="deleteConversation(chat.id)"
-                                class="absolute right-2 hidden cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-rose-50/50 hover:text-error-red group-hover:block"
-                                :title="
-                                    t('nav.delete_chat') ||
-                                    'Delete Conversation'
-                                "
+                                class="absolute right-2 hidden cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-error-red/10 hover:text-error-red group-hover:block"
+                                :title="t('nav.delete_chat')"
                             >
                                 <Trash2 :size="12" />
                             </button>
@@ -160,6 +163,7 @@ function closeMobileHistory(): void {
             >
                 <div class="flex min-w-0 flex-1 items-center gap-3">
                     <div
+                        aria-hidden="true"
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-outline-glass bg-surface-container-low font-heading text-xs font-bold text-primary"
                     >
                         {{ userInitials }}
@@ -168,11 +172,7 @@ function closeMobileHistory(): void {
                         <p
                             class="truncate text-xs font-semibold text-on-surface"
                         >
-                            {{
-                                auth.user
-                                    ? auth.user.email.split('@')[0]
-                                    : 'User'
-                            }}
+                            {{ userLabel }}
                         </p>
                         <p
                             class="truncate text-[9px] text-on-surface-variant opacity-85 font-medium"
@@ -198,7 +198,7 @@ function closeMobileHistory(): void {
                     </Link>
                     <button
                         @click="logout"
-                        class="cursor-pointer rounded-lg p-1.5 text-on-surface-variant transition-all hover:bg-rose-50/50 hover:text-error-red"
+                        class="cursor-pointer rounded-lg p-1.5 text-on-surface-variant transition-all hover:bg-error-red/10 hover:text-error-red"
                         :title="t('nav.logout')"
                         :aria-label="t('nav.logout')"
                     >
@@ -210,7 +210,7 @@ function closeMobileHistory(): void {
 
         <!-- Mobile Top Navigation Header -->
         <header
-            class="glass-panel sticky top-0 z-30 flex h-15 w-full items-center justify-between border-b border-outline-glass px-4 shadow-sm md:hidden"
+            class="glass-panel sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-outline-glass px-4 shadow-sm md:hidden"
         >
             <div class="flex items-center gap-2">
                 <Brand href="/dashboard" />
@@ -281,7 +281,7 @@ function closeMobileHistory(): void {
             <p
                 class="mb-2 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase opacity-75"
             >
-                {{ t('nav.history') || 'History' }}
+                {{ t('nav.history') }}
             </p>
             <div v-if="conversations.length > 0" class="space-y-1">
                 <div
@@ -305,8 +305,8 @@ function closeMobileHistory(): void {
                     <button
                         type="button"
                         @click.stop="deleteConversation(chat.id)"
-                        class="absolute right-2 cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-rose-50/50 hover:text-error-red"
-                        :title="t('nav.delete_chat') || 'Delete Conversation'"
+                        class="absolute right-2 cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-error-red/10 hover:text-error-red"
+                        :title="t('nav.delete_chat')"
                     >
                         <Trash2 :size="12" />
                     </button>
@@ -318,7 +318,10 @@ function closeMobileHistory(): void {
         </div>
 
         <!-- Main Workspace -->
-        <main class="flex h-screen flex-1 flex-col overflow-hidden">
+        <main
+            id="main-content"
+            class="flex h-screen flex-1 flex-col overflow-hidden"
+        >
             <div
                 class="relative flex flex-1 flex-col overflow-hidden p-4 md:p-8"
             >
