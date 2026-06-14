@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace Thinkycz\LaravelCore\Http;
 
-use Closure;
 use Illuminate\Foundation\Http\FormRequest as IlluminateFormRequest;
 use Illuminate\Validation\Factory as ValidatorFactory;
-use Symfony\Component\HttpFoundation\Response;
-use Thinkycz\LaravelCore\Support\Limit;
 use Thinkycz\LaravelCore\Support\Parser;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Throttler;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Traits\AssertTrait;
 use Thinkycz\LaravelCore\Traits\ParserTrait;
@@ -57,16 +53,6 @@ class FormRequest extends IlluminateFormRequest
     public function signature(): RequestSignature
     {
         return new RequestSignature($this);
-    }
-
-    /**
-     * Throttler getter.
-     *
-     * @param Closure(int): never|Closure(int): Response|null $responseCallback
-     */
-    public function throttler(string $key, int $maxAttempts, int $decaySeconds, Closure|null $responseCallback = null): Throttler
-    {
-        return new Throttler(new Limit($this->signature()->defaults()->key($key)->hash(), $maxAttempts, $decaySeconds, $responseCallback));
     }
 
     /**

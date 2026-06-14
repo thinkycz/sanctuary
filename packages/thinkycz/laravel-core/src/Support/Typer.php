@@ -551,7 +551,7 @@ class Typer
      */
     public static function mustParseNullableFloat(mixed $value): float|null
     {
-        if ($value === null || \is_int($value)) {
+        if ($value === null || \is_float($value)) {
             return $value;
         }
 
@@ -1174,11 +1174,10 @@ class Typer
      */
     public static function assertNotEmpty(array $value): array
     {
-        if (\count($value) !== 0) {
+        if (\count($value) === 0) {
             Panicker::panic(__METHOD__, 'assertion failed', \compact('value'));
         }
 
-        // @phpstan-ignore-next-line
         return $value;
     }
 

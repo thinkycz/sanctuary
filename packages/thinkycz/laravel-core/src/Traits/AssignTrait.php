@@ -247,7 +247,6 @@ trait AssignTrait
      *
      * @param class-string<T> $class
      *
-     * @return T|null
      * @return $this
      */
     public function assignNullableInstance(string $key, string $class, object|null $value): static

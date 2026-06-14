@@ -46,7 +46,9 @@ class EmailBrokerService
             return true;
         }
 
-        return $token === Resolver::resolveCacheManager()->get($this->cacheKey($guard, $email));
+        $expected = Resolver::resolveCacheManager()->get($this->cacheKey($guard, $email));
+
+        return \is_string($expected) && \hash_equals($expected, $token);
     }
 
     /**
