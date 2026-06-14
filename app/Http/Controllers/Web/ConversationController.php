@@ -18,7 +18,6 @@ use Inertia\Response;
 use Laravel\Ai\Models\Conversation;
 use Laravel\Ai\Streaming\Events\StreamEvent;
 use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Thinkycz\LaravelCore\Http\RequestSignature;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -61,11 +60,11 @@ class ConversationController
     {
         $user = User::mustAuth();
 
-        $this->hit($this->limit());
-
         $request->validate([
             'message' => ['required', 'string', 'max:5000'],
         ]);
+
+        $clearThrottle = $this->hit($this->limit());
 
         $message = Typer::assertString($request->input('message'));
 
@@ -75,7 +74,7 @@ class ConversationController
         $agent = ChatAgent::make()->continue($conversationId, $user);
         $stream = $agent->stream($message);
 
-        return new SymfonyStreamedResponse(function () use ($stream, $conversation, $conversationId, $message): void {
+        return new SymfonyStreamedResponse(function () use ($stream, $conversation, $conversationId, $message, $clearThrottle): void {
             $this->prepareStream();
 
             try {
@@ -92,20 +91,13 @@ class ConversationController
                 return;
             }
 
+            $clearThrottle();
+
             $this->emitStreamDone($conversationId);
             $this->flushStream();
 
-            // Generate a friendly 3-4 word title after the client has been released.
-            try {
-                $titleResponse = ChatAgent::make()->prompt(
-                    "Generate a concise 3-4 word title for a conversation that starts with the following message. Respond with only the title, no quotes or punctuation: '{$message}'",
-                );
-                $conversation->update([
-                    'title' => Str::limit($titleResponse->text, 100),
-                ]);
-            } catch (Throwable) {
-                // Ignore title generation errors; the snippet title remains.
-            }
+            // Generate a friendly title after the client has been released.
+            $this->generateTitle($conversation, $message);
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache, must-revalidate',
@@ -121,21 +113,17 @@ class ConversationController
     {
         $user = User::mustAuth();
 
-        $conversation = Conversation::find($id);
+        $request->validate([
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $conversation = $this->conversations->findOwned($id, $user);
 
         if ($conversation === null) {
             throw new NotFoundHttpException();
         }
 
-        if ($this->conversations->findOwned($id, $user) === null) {
-            throw new AccessDeniedHttpException();
-        }
-
-        $this->hit($this->limit());
-
-        $request->validate([
-            'message' => ['required', 'string', 'max:5000'],
-        ]);
+        $clearThrottle = $this->hit($this->limit());
 
         $message = Typer::assertString($request->input('message'));
 
@@ -143,7 +131,7 @@ class ConversationController
         $agent = ChatAgent::make()->continue($conversationId, $user);
         $stream = $agent->stream($message);
 
-        return new SymfonyStreamedResponse(function () use ($stream, $conversationId): void {
+        return new SymfonyStreamedResponse(function () use ($stream, $conversationId, $clearThrottle): void {
             $this->prepareStream();
 
             try {
@@ -158,6 +146,8 @@ class ConversationController
 
                 return;
             }
+
+            $clearThrottle();
 
             $this->emitStreamDone($conversationId);
             $this->flushStream();
@@ -261,6 +251,34 @@ class ConversationController
     {
         if (!App::runningUnitTests()) {
             \flush();
+        }
+    }
+
+    /**
+     * Generate a concise AI title for the conversation.
+     *
+     * The user's opening message is bounded before interpolation to limit
+     * the prompt size and blunt prompt-injection. The 35-character title
+     * limit matches the snippet fallback in ConversationRepository.
+     * Failures are logged at debug level so a misbehaving provider stays
+     * diagnosable while the snippet title remains intact.
+     */
+    private function generateTitle(Conversation $conversation, string $message): void
+    {
+        try {
+            $bounded = Str::limit($message, 200);
+
+            $titleResponse = ChatAgent::make()->prompt(
+                "Generate a concise 3-4 word title for a conversation that starts with the following message. Respond with only the title, no quotes or punctuation: '{$bounded}'",
+            );
+
+            $conversation->update([
+                'title' => Str::limit($titleResponse->text, 35),
+            ]);
+        } catch (Throwable $exception) {
+            Resolver::resolveLogManager()->debug('AI title generation failed', [
+                'exception' => $exception,
+            ]);
         }
     }
 }

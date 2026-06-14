@@ -38,8 +38,6 @@ class RegisterController
      */
     public function store(Request $request): SymfonyResponse
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
@@ -47,6 +45,8 @@ class RegisterController
             'password' => $authValidity->password()->required()->confirmed()->toArray(),
             'locale' => $authValidity->locale()->required()->toArray(),
         ]);
+
+        $clearThrottle = $this->hit($this->limit());
 
         $user = DB::transaction(static function () use ($validated): User {
             return User::create([
@@ -59,6 +59,8 @@ class RegisterController
         Resolver::resolveDatabaseTokenGuard('users')->login($user);
 
         $request->session()->regenerate();
+
+        $clearThrottle();
 
         return Resolver::resolveRedirector()->to('/dashboard');
     }

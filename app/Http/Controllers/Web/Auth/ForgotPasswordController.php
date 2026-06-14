@@ -36,13 +36,13 @@ class ForgotPasswordController
      */
     public function store(Request $request): Response
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
             'email' => $authValidity->email()->required()->toArray(),
         ]);
+
+        $clearThrottle = $this->hit($this->limit());
 
         $user = Typer::assertNullableInstance(Resolver::resolveEloquentUserProvider('users')->retrieveByCredentials([
             'email' => $validated->assertString('email'),
@@ -63,6 +63,8 @@ class ForgotPasswordController
         });
 
         $user->sendPasswordNewPasswordSettedNotification($password);
+
+        $clearThrottle();
 
         Inertia::flash('success', \__('A new password has been sent to your email address.'));
 

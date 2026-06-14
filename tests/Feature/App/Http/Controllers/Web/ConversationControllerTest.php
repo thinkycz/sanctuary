@@ -169,7 +169,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($otherUser, 'users')
         ->post('/conversations/' . $conversation->getKey() . '/messages', ['message' => 'nope'])
-        ->assertForbidden();
+        ->assertNotFound();
 
     $this->be($otherUser, 'users')
         ->delete('/conversations/' . $conversation->getKey())

@@ -27,13 +27,15 @@ class VerifyEmailController
      */
     public function store(Request $request): Response
     {
-        $this->hit($this->limit());
-
         $user = User::mustAuth();
+
+        $clearThrottle = $this->hit($this->limit());
 
         if (!$user->hasVerifiedEmail()) {
             $user->sendEmailVerificationNotification();
         }
+
+        $clearThrottle();
 
         Inertia::flash('success', \__('Verification email sent.'));
 

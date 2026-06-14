@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ai;
 
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Ai\Messages\Message;
@@ -15,6 +16,11 @@ use Thinkycz\LaravelCore\Support\Typer;
 class ConversationRepository
 {
     /**
+     * Maximum number of conversations surfaced in the sidebar payload.
+     */
+    public const int SIDEBAR_LIMIT = 50;
+
+    /**
      * Create a conversation owned by the given user.
      */
     public function createForUser(User $user, string $message): Conversation
@@ -24,6 +30,28 @@ class ConversationRepository
             'user_id' => $this->userId($user),
             'title' => Str::limit($message, 35),
         ]);
+    }
+
+    /**
+     * Resolve the most recently updated conversations for the sidebar.
+     *
+     * @return list<array{id: string, title: string, updated_at: string|null}>
+     */
+    public function recentForSidebar(User $user, int $limit = self::SIDEBAR_LIMIT): array
+    {
+        $payload = [];
+
+        foreach ($user->conversations()->select(['id', 'title', 'updated_at'])->limit($limit)->get() as $conversation) {
+            $updatedAt = $conversation->getAttribute('updated_at');
+
+            $payload[] = [
+                'id' => $this->conversationId($conversation),
+                'title' => $this->title($conversation),
+                'updated_at' => $updatedAt === null ? null : $this->serializeTimestamp($updatedAt),
+            ];
+        }
+
+        return $payload;
     }
 
     /**
@@ -147,5 +175,20 @@ class ConversationRepository
     private function userId(User $user): int
     {
         return Typer::assertInt($user->getKey());
+    }
+
+    /**
+     * Serialize a timestamp attribute to its JSON representation.
+     *
+     * Eloquent casts `updated_at` to a Carbon instance; the sidebar payload
+     * expects the same string form the model's `toArray()` would emit.
+     */
+    private function serializeTimestamp(mixed $value): string
+    {
+        if (\is_string($value)) {
+            return $value;
+        }
+
+        return Typer::assertString(Typer::assertInstance($value, Carbon::class)->toJSON());
     }
 }

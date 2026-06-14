@@ -38,8 +38,6 @@ class EmailVerificationConfirmController
      */
     public function __invoke(Request $request): RedirectResponse
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
@@ -47,6 +45,8 @@ class EmailVerificationConfirmController
             'email' => $authValidity->email()->required()->toArray(),
             'token' => $authValidity->emailVerificationToken()->required()->toArray(),
         ]);
+
+        $clearThrottle = $this->hit($this->limit());
 
         $guard = $validated->assertString('guard');
         $email = $validated->assertString('email');
@@ -63,6 +63,8 @@ class EmailVerificationConfirmController
         }
 
         if ($user->hasVerifiedEmail()) {
+            $clearThrottle();
+
             return $this->redirectAfterConfirm($user, \__('Email already verified.'));
         }
 
@@ -79,6 +81,8 @@ class EmailVerificationConfirmController
         });
 
         Resolver::resolveEventDispatcher()->dispatch(new Verified($user));
+
+        $clearThrottle();
 
         return $this->redirectAfterConfirm($user, \__('Email verified.'));
     }

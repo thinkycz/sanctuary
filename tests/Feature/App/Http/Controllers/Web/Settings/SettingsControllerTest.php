@@ -25,13 +25,14 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('user can update profile email and locale', function (): void {
     $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
 
-    $response = $this->be($user, 'users')->post('/settings/profile', [
+    $response = $this->be($user, 'users')->from('/settings')->post('/settings/profile', [
         'email' => 'new-email@example.com',
         'locale' => 'cs',
     ], $this->inertiaHeaders());
 
-    $response->assertOk();
-    $response->assertJsonPath('component', 'settings/Index');
+    // PRG: mutating POST redirects back; the success flash survives the
+    // 302 → render chain via Inertia::flash().
+    $response->assertRedirect('/settings');
     \assertInertiaFlash($response, 'success', \__('Profile updated.'));
 
     $user->refresh();
@@ -73,13 +74,14 @@ use Thinkycz\LaravelCore\Support\Typer;
     $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
     $originalHash = $user->getAuthPassword();
 
-    $response = $this->be($user, 'users')->post('/settings/password', [
+    $response = $this->be($user, 'users')->from('/settings')->post('/settings/password', [
         'password' => UserFactory::$password,
         'new_password' => 'new-password-123',
     ], $this->inertiaHeaders());
 
-    $response->assertOk();
-    $response->assertJsonPath('component', 'settings/Index');
+    // PRG: mutating POST redirects back; the success flash survives the
+    // 302 → render chain via Inertia::flash().
+    $response->assertRedirect('/settings');
     \assertInertiaFlash($response, 'success', \__('Password updated.'));
 
     $user->refresh();

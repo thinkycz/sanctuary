@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Http\ApiFormRequest;
 use Thinkycz\LaravelCore\Models\BaseUser;
 use Thinkycz\LaravelCore\Routing\AutomaticController;
+use Thinkycz\LaravelCore\Support\AuthTiming;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Parser;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -23,7 +24,9 @@ class LoginController extends AutomaticController
     {
         $validated = $this->validate($request);
 
-        $this->hit($this->limit());
+        // Throttle after validation; refund the hit on success so a run
+        // of valid logins never locks the user out.
+        $clearThrottle = $this->hit($this->limit());
 
         $password = $validated->assertString('password');
 
@@ -36,6 +39,8 @@ class LoginController extends AutomaticController
         $user = Resolver::resolveEloquentUserProvider($guard)->retrieveByCredentials($credentials);
 
         if ($user instanceof BaseUser === false) {
+            AuthTiming::dummyPasswordCheck($password);
+
             $request->thrower()
                 ->errors(\array_keys($credentials), 'auth.failed')
                 ->throw();
@@ -50,6 +55,8 @@ class LoginController extends AutomaticController
         }
 
         Resolver::resolveDatabaseTokenGuard($guard)->login($user);
+
+        $clearThrottle();
 
         return $user->meResource()->response();
     }

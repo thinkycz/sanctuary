@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Thinkycz\LaravelCore\Support\Config;
-use Thinkycz\LaravelCore\Support\Resolver;
 
 /**
  * @extends Factory<User>
@@ -49,9 +48,14 @@ class UserFactory extends Factory
 
     /**
      * Create model with password filled.
+     *
+     * Stores the plaintext password so the model's `hashed` cast
+     * performs the single bcrypt pass. Pre-hashing here would let the
+     * cast re-hash the already-hashed value, producing an unusable
+     * credential.
      */
     public function password(string|null $password = null): static
     {
-        return $this->set('password', Resolver::resolveHasher()->make($password ?? static::$password ?? 'password'));
+        return $this->set('password', $password ?? static::$password ?? 'password');
     }
 }

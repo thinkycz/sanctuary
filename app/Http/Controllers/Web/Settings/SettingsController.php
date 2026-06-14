@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Settings;
 
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -30,7 +31,7 @@ class SettingsController
     /**
      * Update profile details (email, locale).
      */
-    public function updateProfile(Request $request): Response
+    public function updateProfile(Request $request): RedirectResponse
     {
         $user = User::mustAuth();
         $authValidity = AuthValidity::inject();
@@ -47,13 +48,13 @@ class SettingsController
 
         Inertia::flash('success', \__('Profile updated.'));
 
-        return Inertia::render('settings/Index');
+        return Resolver::resolveRedirector()->back();
     }
 
     /**
      * Update the user's password.
      */
-    public function updatePassword(Request $request): Response
+    public function updatePassword(Request $request): RedirectResponse
     {
         $user = User::mustAuth();
         $authValidity = AuthValidity::inject();
@@ -79,6 +80,6 @@ class SettingsController
 
         Inertia::flash('success', \__('Password updated.'));
 
-        return Inertia::render('settings/Index');
+        return Resolver::resolveRedirector()->back();
     }
 }

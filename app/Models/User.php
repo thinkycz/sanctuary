@@ -15,6 +15,20 @@ use Thinkycz\LaravelCore\Models\BaseUser;
 class User extends BaseUser implements MustVerifyEmail
 {
     /**
+     * Explicit mass-assignment allowlist.
+     *
+     * Overrides the permissive `BaseUser::$guarded = ['id']` so only the
+     * columns actually written through `create()`/`update()` are
+     * fillable: `email`, `password`, and `locale`. Sensitive attributes
+     * such as `email_verified_at` and `remember_token` are set through
+     * `forceFill()`/`save()` (bypassing the guard) by their dedicated
+     * methods, so they remain intentionally non-fillable here.
+     *
+     * @var list<string>
+     */
+    protected $fillable = ['email', 'password', 'locale'];
+
+    /**
      * Get the user's AI conversations.
      *
      * @return HasMany<Conversation, $this>

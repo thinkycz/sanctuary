@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Models\BaseUser;
+use Thinkycz\LaravelCore\Support\AuthTiming;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -40,14 +41,17 @@ class LoginController
      */
     public function store(Request $request): SymfonyResponse
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
             'email' => $authValidity->email()->required()->toArray(),
             'password' => $authValidity->password()->required()->toArray(),
         ]);
+
+        // Throttle only after validation succeeds so malformed requests
+        // don't consume the rate-limit budget; the limit is refunded on
+        // success so a sequence of valid logins never locks the user out.
+        $clearThrottle = $this->hit($this->limit());
 
         $email = $validated->assertString('email');
         $password = $validated->assertString('password');
@@ -59,7 +63,7 @@ class LoginController
         $hasher = Resolver::resolveHasher();
 
         if ($user instanceof BaseUser === false) {
-            $hasher->check($password, '$2y$10$' . \str_repeat('a', 53));
+            AuthTiming::dummyPasswordCheck($password);
 
             Thrower::default()->message('email', Typer::assertString(\__('auth.failed')))->throw();
         }
@@ -71,6 +75,8 @@ class LoginController
         Resolver::resolveDatabaseTokenGuard('users')->login($user);
 
         $request->session()->regenerate();
+
+        $clearThrottle();
 
         return Resolver::resolveRedirector()->intended('/dashboard');
     }
