@@ -46,7 +46,7 @@ return [
 
     'lifetime' => $env->parseNullableInt('SESSION_LIFETIME') ?? 120,
 
-    'expire_on_close' => $env->parseNullableString('SESSION_EXPIRE_ON_CLOSE') ?? true,
+    'expire_on_close' => $env->parseNullableBool('SESSION_EXPIRE_ON_CLOSE') ?? false,
 
     /*
     |--------------------------------------------------------------------------
@@ -59,7 +59,7 @@ return [
     |
     */
 
-    'encrypt' => $env->parseNullableString('SESSION_ENCRYPT') ?? true,
+    'encrypt' => $env->parseNullableBool('SESSION_ENCRYPT') ?? false,
 
     /*
     |--------------------------------------------------------------------------
@@ -178,7 +178,7 @@ return [
     |
     */
 
-    'secure' => $env->parseNullableString('SESSION_SECURE_COOKIE') ?? true,
+    'secure' => $env->parseNullableBool('SESSION_SECURE_COOKIE') ?? true,
 
     /*
     |--------------------------------------------------------------------------
@@ -191,7 +191,7 @@ return [
     |
     */
 
-    'http_only' => $env->parseNullableString('SESSION_HTTP_ONLY') ?? true,
+    'http_only' => $env->parseNullableBool('SESSION_HTTP_ONLY') ?? true,
 
     /*
     |--------------------------------------------------------------------------
@@ -221,5 +221,5 @@ return [
     |
     */
 
-    'partitioned' => $env->parseNullableString('SESSION_PARTITIONED_COOKIE') ?? false,
+    'partitioned' => $env->parseNullableBool('SESSION_PARTITIONED_COOKIE') ?? false,
 ];

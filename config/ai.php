@@ -27,6 +27,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Conversations
+    |--------------------------------------------------------------------------
+    |
+    | Table names used to persist agent conversations and their messages.
+    | These are read by the conversations migration and ConversationRepository
+    | so operators can override the schema names from the environment.
+    |
+    */
+
+    'conversations' => [
+        'tables' => [
+            'conversations' => $env->parseNullableString('AI_CONVERSATIONS_TABLE') ?? 'agent_conversations',
+            'messages' => $env->parseNullableString('AI_CONVERSATIONS_MESSAGES_TABLE') ?? 'agent_conversation_messages',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Caching
     |--------------------------------------------------------------------------
     |
