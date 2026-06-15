@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onBeforeUnmount } from 'vue';
+import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import type { ChatConversation, ChatMessage, SharedProps } from '@/types';
+import type {
+    AgentRunSnapshot,
+    ChatConversation,
+    ChatMessage,
+    SharedProps,
+} from '@/types';
 import { useI18n } from 'vue-i18n';
 import { Send, Sparkles, Bot, User } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useActiveConversation } from '@/composables/useActiveConversation';
-import { parseTextDeltaSseChunk } from '@/lib/sse';
+import { useAgentRunBridge } from '@/composables/useAgentRunBridge';
+import RunStatusBadge from '@/components/agent/RunStatusBadge.vue';
 
 interface LocalMessage extends ChatMessage {
     id: string;
@@ -15,6 +21,7 @@ interface LocalMessage extends ChatMessage {
 
 const props = defineProps<{
     conversation?: ChatConversation;
+    activeRun?: AgentRunSnapshot | null;
 }>();
 
 const { t } = useI18n();
@@ -28,6 +35,7 @@ const chatTextarea = ref<HTMLTextAreaElement | null>(null);
 
 const localMessages = ref<LocalMessage[]>([]);
 const localProcessing = ref(false);
+const currentTool = ref<string | null>(null);
 // Tracks the index of the assistant message currently being streamed,
 // so the loading indicator only shows for that specific bubble.
 const streamingMsgIndex = ref(-1);
@@ -37,18 +45,13 @@ function generateMessageId(): string {
     return `msg-${++messageIdCounter}`;
 }
 
-let activeAbortController: AbortController | null = null;
-
-onBeforeUnmount(() => {
-    if (activeAbortController) {
-        activeAbortController.abort();
-    }
-});
-
 let isScrollScheduled = false;
 
-function scrollToBottom() {
-    if (isScrollScheduled) return;
+function scrollToBottom(): void {
+    if (isScrollScheduled) {
+        return;
+    }
+
     isScrollScheduled = true;
     nextTick(() => {
         if (messagesContainer.value) {
@@ -66,18 +69,7 @@ const suggestions = [
     { icon: Sparkles, textKey: 'dashboard.suggestions.schema' as const },
 ] as const;
 
-function removeOptimisticConversation(id: string): void {
-    const conversations = page.props.conversations;
-    const index = conversations.findIndex(
-        (conversation) => conversation.id === id,
-    );
-
-    if (index >= 0) {
-        conversations.splice(index, 1);
-    }
-}
-
-function resizeTextarea() {
+function resizeTextarea(): void {
     if (chatTextarea.value) {
         chatTextarea.value.style.height = 'auto';
         chatTextarea.value.style.height = `${chatTextarea.value.scrollHeight}px`;
@@ -88,224 +80,192 @@ watch(inputMessage, () => {
     nextTick(resizeTextarea);
 });
 
-// Sync local messages with props when prop changes (only if not currently streaming)
-watch(
-    () => props.conversation,
-    (newConv) => {
-        if (localProcessing.value) return;
-        if (newConv) {
-            localMessages.value = newConv.messages.map((m) => ({
-                id: generateMessageId(),
-                role: m.role,
-                content: m.content,
-            }));
-        } else {
-            localMessages.value = [];
-        }
-        scrollToBottom();
+const bridge = useAgentRunBridge({
+    initialRun: props.activeRun ?? null,
+    onRunStarted: () => {
+        // No-op: submitMessage handles the optimistic sidebar insert after
+        // bridge.start() resolves, and on mount there is nothing to insert.
     },
-    { immediate: true },
-);
+    onTextDelta: (delta) => {
+        if (
+            streamingMsgIndex.value >= 0 &&
+            streamingMsgIndex.value < localMessages.value.length
+        ) {
+            const current = localMessages.value[streamingMsgIndex.value];
+            current.content = (current.content ?? '') + delta;
+            scrollToBottom();
+        }
+    },
+    onToolActivity: (tool) => {
+        currentTool.value = tool;
+    },
+    onTerminal: (status, error) => {
+        if (
+            streamingMsgIndex.value >= 0 &&
+            streamingMsgIndex.value < localMessages.value.length
+        ) {
+            const bubble = localMessages.value[streamingMsgIndex.value];
 
-// Sync local messages with props when streaming completes
-watch(localProcessing, (processing) => {
-    if (!processing && props.conversation) {
-        localMessages.value = props.conversation.messages.map((m) => ({
+            if (status === 'failed' && error !== null) {
+                bubble.content = error;
+            } else if (status === 'cancelled') {
+                bubble.content = (bubble.content ?? '') + '\n\n[cancelled]';
+            }
+        }
+
+        currentTool.value = null;
+        localProcessing.value = false;
+
+        if (status === 'completed') {
+            void router.reload({ only: ['conversation', 'active_run'] });
+        }
+    },
+    onError: (message) => {
+        if (
+            streamingMsgIndex.value >= 0 &&
+            streamingMsgIndex.value < localMessages.value.length
+        ) {
+            localMessages.value[streamingMsgIndex.value].content = message;
+        }
+
+        currentTool.value = null;
+        localProcessing.value = false;
+    },
+});
+
+function selectSuggestion(text: string): void {
+    inputMessage.value = text;
+}
+
+function applySnapshot(
+    conv: ChatConversation | undefined,
+    run: AgentRunSnapshot | null,
+): void {
+    if (conv) {
+        localMessages.value = conv.messages.map((m) => ({
             id: generateMessageId(),
             role: m.role,
             content: m.content,
         }));
-        scrollToBottom();
+    } else {
+        localMessages.value = [];
     }
-});
 
-function selectSuggestion(text: string) {
-    inputMessage.value = text;
+    if (run !== null && (run.status === 'queued' || run.status === 'running')) {
+        const newIndex =
+            localMessages.value.push({
+                id: generateMessageId(),
+                role: 'assistant',
+                content: run.assistant_content,
+            }) - 1;
+        streamingMsgIndex.value = newIndex;
+        localProcessing.value = true;
+    } else {
+        streamingMsgIndex.value = -1;
+        localProcessing.value = false;
+    }
+
+    scrollToBottom();
 }
 
-async function submitMessage() {
-    if (!inputMessage.value.trim() || localProcessing.value) return;
+watch(
+    [() => props.conversation, () => props.activeRun],
+    ([newConv, newActiveRun]) => {
+        applySnapshot(newConv, newActiveRun ?? null);
+    },
+    { immediate: true },
+);
+
+async function submitMessage(): Promise<void> {
+    if (!inputMessage.value.trim() || localProcessing.value) {
+        return;
+    }
 
     const promptText = inputMessage.value;
     inputMessage.value = '';
 
-    localProcessing.value = true;
-    activeAbortController = new AbortController();
-
-    // Remove any leftover empty assistant bubbles from a previous failed/incomplete stream.
+    // Remove any leftover empty assistant bubbles from a previous failed/incomplete run.
     while (
         localMessages.value.length > 0 &&
         localMessages.value[localMessages.value.length - 1].role ===
             'assistant' &&
-        localMessages.value[localMessages.value.length - 1].content === ''
+        (localMessages.value[localMessages.value.length - 1].content ?? '') ===
+            ''
     ) {
         localMessages.value.pop();
     }
 
-    // Instantly append user message and empty assistant message block
+    // Instantly append user message and empty assistant message block.
     localMessages.value.push({
         id: generateMessageId(),
         role: 'user',
         content: promptText,
     });
-    const assistantMsgIndex =
+    streamingMsgIndex.value =
         localMessages.value.push({
             id: generateMessageId(),
             role: 'assistant',
             content: '',
         }) - 1;
-    streamingMsgIndex.value = assistantMsgIndex;
+    localProcessing.value = true;
     scrollToBottom();
 
-    const url = props.conversation
-        ? `/conversations/${props.conversation.id}/messages`
-        : '/conversations';
-    let newConversationId: string | null = null;
-
     try {
-        const xsrfToken = document.cookie
-            .split('; ')
-            .find((row) => row.startsWith('XSRF-TOKEN='))
-            ?.split('=')[1];
-
-        const response = await fetch(url, {
-            method: 'POST',
-            signal: activeAbortController.signal,
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'text/event-stream',
-                'X-XSRF-TOKEN': xsrfToken ? decodeURIComponent(xsrfToken) : '',
-            },
-            body: JSON.stringify({ message: promptText }),
+        const started = await bridge.start({
+            prompt: promptText,
+            conversationId: props.conversation?.id ?? null,
         });
 
-        if (!response.ok || !response.body) {
-            throw new Error('Failed to generate response');
-        }
-
-        const conversationIdHeader = response.headers.get('X-Conversation-ID');
-        if (conversationIdHeader && !props.conversation) {
-            newConversationId = conversationIdHeader;
-            if (page.props.conversations) {
-                const title =
-                    promptText.length > 35
-                        ? promptText.slice(0, 35) + '...'
-                        : promptText;
-                page.props.conversations.unshift({
-                    id: conversationIdHeader,
-                    title: title,
-                    updated_at: new Date().toISOString(),
-                });
-            }
-            // Signal the sidebar to highlight this conversation immediately,
-            // without navigating (which would wipe local streaming state).
-            pendingConversationId.value = conversationIdHeader;
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let sseBuffer = '';
-        let streamDone = false;
-        let streamError: string | null = null;
-        let doneConversationId: string | null = null;
-
-        while (!streamDone && streamError === null) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const parsed = parseTextDeltaSseChunk(chunk, sseBuffer);
-            sseBuffer = parsed.buffer;
-
-            for (const delta of parsed.deltas) {
-                localMessages.value[assistantMsgIndex].content =
-                    (localMessages.value[assistantMsgIndex].content ?? '') +
-                    delta;
-                scrollToBottom();
-            }
-
-            // Backend emits a JSON `done` event of the shape
-            // `{ type: "done", conversation_id: "<uuid>" }`. Extract
-            // the id by scanning the chunk's data rows once.
-            for (const line of chunk.split('\n')) {
-                const trimmed = line.trim();
-                if (!trimmed.startsWith('data: ')) continue;
-                const payload = trimmed.slice(6);
-                if (payload === '[DONE]') {
-                    streamDone = true;
-                    continue;
-                }
-                try {
-                    const obj = JSON.parse(payload) as {
-                        type?: unknown;
-                        conversation_id?: unknown;
-                    };
-                    if (
-                        obj.type === 'done' &&
-                        typeof obj.conversation_id === 'string'
-                    ) {
-                        doneConversationId = obj.conversation_id;
-                    } else if (
-                        obj.type === 'error' &&
-                        typeof (obj as { message?: unknown }).message ===
-                            'string'
-                    ) {
-                        streamError = (obj as { message: string }).message;
-                    }
-                } catch {
-                    // Incomplete JSON; the parser already dropped it.
-                }
-            }
-
-            if (parsed.done) {
-                streamDone = true;
-            }
-        }
-
-        if (streamError !== null) {
-            throw new Error(streamError);
-        }
-
-        if (doneConversationId !== null) {
-            const newId = doneConversationId;
-            pendingConversationId.value = null;
-            if (!props.conversation || props.conversation.id !== newId) {
-                router.visit(`/conversations/${newId}`, {
-                    preserveScroll: true,
-                    replace: true,
-                });
-            } else {
-                router.reload();
-            }
+        // For brand-new conversations, optimistically surface the id in the
+        // sidebar and ask AppLayout to highlight it without a full navigation.
+        if (!props.conversation && page.props.conversations) {
+            const title =
+                promptText.length > 35
+                    ? `${promptText.slice(0, 35)}...`
+                    : promptText;
+            page.props.conversations.unshift({
+                id: started.conversation_id,
+                title,
+                updated_at: new Date().toISOString(),
+            });
+            pendingConversationId.value = started.conversation_id;
         }
     } catch (e: unknown) {
-        if (e instanceof DOMException && e.name === 'AbortError') {
-            return;
+        console.error('Failed to start agent run:', e);
+        if (
+            streamingMsgIndex.value >= 0 &&
+            streamingMsgIndex.value < localMessages.value.length
+        ) {
+            localMessages.value[streamingMsgIndex.value].content =
+                e instanceof Error && e.message
+                    ? e.message
+                    : t('agent.error_generic');
         }
-        console.error('Error during chat stream:', e);
-        if (newConversationId) {
-            removeOptimisticConversation(newConversationId);
-        }
-        localMessages.value[assistantMsgIndex].content =
-            e instanceof Error && e.message
-                ? e.message
-                : t('errors.failed_response');
-    } finally {
         localProcessing.value = false;
         streamingMsgIndex.value = -1;
-        pendingConversationId.value = null;
-        activeAbortController = null;
-        scrollToBottom();
     }
 }
 
-// Scroll to bottom when conversation changes or new messages arrive
-watch(
-    () => props.conversation?.messages,
-    () => {
-        scrollToBottom();
-    },
-    { deep: true, immediate: true },
+async function onCancelRun(): Promise<void> {
+    await bridge.cancel();
+}
+
+// Bypass Vue's reactivity for the ref returned by the bridge composable.
+const activeRunSnapshot = computed<AgentRunSnapshot | null>(
+    () => bridge.activeRun.value,
+);
+
+onBeforeUnmount(() => {
+    // The bridge composable already registers its own onBeforeUnmount to
+    // abort the polling fetch; nothing to do here. The ref is kept so the
+    // abort lifecycle is in one place.
+});
+
+const isRunActive = computed<boolean>(
+    () =>
+        activeRunSnapshot.value !== null &&
+        (activeRunSnapshot.value.status === 'queued' ||
+            activeRunSnapshot.value.status === 'running'),
 );
 </script>
 
@@ -423,6 +383,18 @@ watch(
                 </div>
             </div>
 
+            <!-- Run Status Badge (above input) -->
+            <RunStatusBadge
+                v-if="
+                    isRunActive ||
+                    activeRunSnapshot?.status === 'failed' ||
+                    activeRunSnapshot?.status === 'cancelled'
+                "
+                :run="activeRunSnapshot"
+                :current-tool="currentTool"
+                @cancel="onCancelRun"
+            />
+
             <!-- Chat Input form -->
             <form
                 @submit.prevent="submitMessage"
@@ -436,7 +408,8 @@ watch(
                         v-model="inputMessage"
                         rows="1"
                         :placeholder="t('dashboard.type_message')"
-                        class="flex-1 resize-none bg-transparent py-2 px-3 text-xs outline-none text-on-surface placeholder:text-on-surface-variant/50 max-h-32 overflow-y-auto scrollbar-none"
+                        :disabled="isRunActive"
+                        class="flex-1 resize-none bg-transparent py-2 px-3 text-xs outline-none text-on-surface placeholder:text-on-surface-variant/50 max-h-32 overflow-y-auto scrollbar-none disabled:opacity-60"
                         @keydown.enter.exact="submitMessage"
                         @keydown.enter.shift.exact.prevent
                         @keydown.enter.meta.exact.prevent="submitMessage"

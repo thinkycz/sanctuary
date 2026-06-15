@@ -6,6 +6,7 @@ export interface SseParseResult {
     lastEventId: number | null;
     terminalType: string | null;
     error: string | null;
+    toolName: string | null;
 }
 
 export function parseTextDeltaSseChunk(
@@ -23,6 +24,7 @@ export function parseTextDeltaSseChunk(
     let lastEventId: number | null = null;
     let terminalType: string | null = null;
     let error: string | null = null;
+    let toolName: string | null = null;
     let done = false;
 
     for (const line of lines) {
@@ -74,6 +76,13 @@ export function parseTextDeltaSseChunk(
             ) {
                 error = (parsed as { error: string }).error;
             }
+
+            if (parsed.type === 'tool_activity') {
+                const candidate = (parsed as { tool_name?: unknown }).tool_name;
+                if (typeof candidate === 'string') {
+                    toolName = candidate;
+                }
+            }
         } catch {
             // Ignore malformed SSE rows and continue parsing later complete rows.
         }
@@ -87,5 +96,6 @@ export function parseTextDeltaSseChunk(
         lastEventId,
         terminalType,
         error,
+        toolName,
     };
 }

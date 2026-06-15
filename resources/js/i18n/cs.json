@@ -105,8 +105,18 @@
         "failed_response": "Nepodařilo se vygenerovat odpověď. Zkuste to prosím znovu."
     },
     "agent": {
+        "cancelled": "Zrušeno",
+        "cancel_run": "Zrušit běh",
+        "cancel_run_confirm": "Zrušit běžícího agenta? Váš postup bude ztracen.",
         "clarification_hint": "Vyberte možnost, která nejlépe odpovídá vašemu záměru.",
-        "recommended": "Doporučeno"
+        "completed": "Dokončeno",
+        "error_generic": "Běh agenta selhal. Zkuste to prosím znovu.",
+        "failed": "Selhalo",
+        "queued": "Ve frontě",
+        "recommended": "Doporučeno",
+        "resume_existing": "Obnovuje se stávající běh…",
+        "running": "Běží…",
+        "tool_running": "Používá se {tool}…"
     },
     "locale": {
         "en": "Angličtina",

@@ -56,6 +56,21 @@ export interface AgentClarification {
     recommended_option: string | null;
 }
 
+/**
+ * A snapshot of a background agent run, as serialized by
+ * `AgentRunService::serializeActiveRun()` and shared with the dashboard
+ * via Inertia. `last_event_id` lets the bridge resume polling without
+ * replaying events the client has already seen.
+ */
+export interface AgentRunSnapshot {
+    id: string;
+    conversation_id: string;
+    status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+    assistant_content: string;
+    last_event_id: number | null;
+    error: string | null;
+}
+
 export interface SharedProps {
     [key: string]: unknown;
 

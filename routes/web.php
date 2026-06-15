@@ -55,8 +55,6 @@ Resolver::resolveRouteRegistrar()
         $router->post('settings/password', [SettingsController::class, 'updatePassword']);
 
         $router->get('conversations/{id}', [ConversationController::class, 'show']);
-        $router->post('conversations', [ConversationController::class, 'store']);
-        $router->post('conversations/{id}/messages', [ConversationController::class, 'storeMessage']);
         $router->delete('conversations/{id}', [ConversationController::class, 'destroy']);
 
         $router->post('agent/runs', AgentRunStartController::class);
