@@ -42,14 +42,7 @@ useBoundLocale();
             </div>
 
             <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                    <Label for="password">{{ t('fields.password') }}</Label>
-                    <Link
-                        href="/forgot-password"
-                        class="text-xs font-semibold text-primary hover:text-primary-container"
-                        >{{ t('auth.login.forgot_link') }}</Link
-                    >
-                </div>
+                <Label for="password">{{ t('fields.password') }}</Label>
                 <Input
                     id="password"
                     name="password"
@@ -61,7 +54,14 @@ useBoundLocale();
                     "
                     required
                 />
-                <FieldError v-bind="fieldError(errors, 'password', 'login')" />
+                <div class="flex items-start justify-between gap-3">
+                    <FieldError v-bind="fieldError(errors, 'password', 'login')" />
+                    <Link
+                        href="/forgot-password"
+                        class="shrink-0 text-xs font-semibold text-primary hover:text-primary-container"
+                        >{{ t('auth.login.forgot_link') }}</Link
+                    >
+                </div>
             </div>
 
             <Button type="submit" class="w-full" :disabled="processing">{{
