@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Http\Resources\UserResource;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Carbon;
 use Laravel\Ai\Models\Conversation;
@@ -37,6 +38,27 @@ class User extends BaseUser implements MustVerifyEmail
     {
         return $this->hasMany(Conversation::class, 'user_id')
             ->orderBy('updated_at', 'desc');
+    }
+
+    /**
+     * Get the user's collections.
+     *
+     * @return HasMany<Collection, $this>
+     */
+    public function collections(): HasMany
+    {
+        return $this->hasMany(Collection::class, 'user_id')
+            ->orderBy('updated_at', 'desc');
+    }
+
+    /**
+     * Get the user's lessons through collections.
+     *
+     * @return HasManyThrough<Lesson, Collection, $this>
+     */
+    public function lessons(): HasManyThrough
+    {
+        return $this->hasManyThrough(Lesson::class, Collection::class, 'user_id', 'collection_id');
     }
 
     /**

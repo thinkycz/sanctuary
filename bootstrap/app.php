@@ -82,6 +82,7 @@ return Application::configure(basePath: \dirname(__DIR__))
                 'register' => 'auth/Register',
                 'settings/profile' => 'settings/Profile',
                 'settings/password' => 'settings/Password',
+                'collections' => 'App/EmptyState',
                 default => 'auth/Login',
             };
 

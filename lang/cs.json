@@ -24,5 +24,20 @@
     "Password updated.": "Heslo bylo aktualizováno.",
     "A new password has been sent to your email address.": "Na vaši e-mailovou adresu bylo odesláno nové heslo.",
     "A password reset link has been sent to your email address.": "Na vaši e-mailovou adresu byl odeslán odkaz pro obnovení hesla.",
-    "Verification email sent.": "Ověřovací e-mail byl odeslán."
+    "Verification email sent.": "Ověřovací e-mail byl odeslán.",
+    "collections.created": "Collection created.",
+    "collections.updated": "Collection updated.",
+    "collections.deleted": "Collection deleted.",
+    "collections.title_required": "A title is required.",
+    "lessons.generation_started": "Lesson generation started.",
+    "lessons.regeneration_started": "Regenerating lesson...",
+    "lessons.updated": "Lesson updated.",
+    "lessons.deleted": "Lesson deleted.",
+    "lessons.source_text_required": "Source text is required.",
+    "lessons.nothing_to_update": "Nothing to update.",
+    "terms.updated": "Term updated.",
+    "terms.invalid_difficulty": "Invalid difficulty level.",
+    "flashcards.invalid_difficulty": "Invalid difficulty.",
+    "quizzes.completed": "Quiz completed!",
+    "tutor.message_required": "A message is required."
 }

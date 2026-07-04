@@ -27,6 +27,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Lesson Generation
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the AI-powered lesson generation agent. The provider
+    | and model are resolved from the environment so operators can swap the
+    | underlying LLM without touching application code.
+    |
+    */
+
+    'lesson_generation' => [
+        'provider' => $env->parseNullableString('AI_PROVIDER') ?? 'openai',
+        'model' => $env->parseNullableString('OPENAI_MODEL') ?? 'gpt-4.1-mini',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tutor
+    |--------------------------------------------------------------------------
+    |
+    | The conversational tutor reuses the default provider but may override
+    | the model for cheaper / faster chat responses.
+    |
+    */
+
+    'tutor' => [
+        'provider' => $env->parseNullableString('AI_PROVIDER') ?? 'openai',
+        'model' => $env->parseNullableString('OPENAI_MODEL') ?? 'gpt-4.1-mini',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Conversations
     |--------------------------------------------------------------------------
     |

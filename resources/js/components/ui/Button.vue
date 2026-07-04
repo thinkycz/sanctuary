@@ -21,7 +21,7 @@ const props = withDefaults(
         :disabled="props.disabled"
         :class="
             cn(
-                'inline-flex h-10 items-center justify-center rounded-xl border border-primary/20 bg-gradient-to-b from-primary-container to-primary px-4 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(0,104,95,0.15)] transition hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer gap-2',
+                'inline-flex h-10 items-center justify-center rounded-xl border border-primary/20 bg-gradient-to-b from-primary-container to-primary px-4 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(13,148,136,0.2)] transition hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer gap-2',
                 props.class,
             )
         "

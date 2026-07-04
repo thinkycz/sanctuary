@@ -1,6 +1,15 @@
 {
     "app": {
-        "name": "Laravel Inertia Stack"
+        "name": "Sanctuary",
+        "empty_title": "Sanctuary",
+        "welcome": "Vitajte v Sanctuary",
+        "welcome_description": "Vytvárajte zbierky obsahu z akéhokoľvek predmetu a nechajte AI premeniť ich na štruktúrované lekcie s kľúčovými pojmami, kartičkami, kvízmi a osobným tutorom.",
+        "feature_collections": "Zbierky",
+        "feature_collections_desc": "Organizujte obsah podľa témy, predmetu alebo oblasti",
+        "feature_ai": "AI lekcie",
+        "feature_ai_desc": "Automaticky generované zhrnutia, vysvetlenia a kvízy",
+        "feature_learn": "Učte sa rýchlejšie",
+        "feature_learn_desc": "Kartičky, pojmy a sledovanie pokroku"
     },
     "common": {
         "cancel": "Zrušiť",
@@ -25,10 +34,181 @@
         "no_chats": "Zatiaľ žiadne konverzácie"
     },
     "brand": {
-        "subtitle": "Štartovacia sada"
+        "subtitle": "Vzdelávacia platforma"
     },
     "conversations": {
         "delete_confirm": "Naozaj chcete vymazať túto konverzáciu?"
+    },
+    "actions": {
+        "cancel": "Zrušiť",
+        "create": "Vytvoriť",
+        "save": "Uložiť"
+    },
+    "tabs": {
+        "overview": "Prehľad",
+        "lessons": "Lekcie",
+        "terms": "Pojmy",
+        "flashcards": "Kartičky",
+        "quizzes": "Kvízy",
+        "tutor": "AI Tutor",
+        "progress": "Pokrok"
+    },
+    "collections": {
+        "label": "Zbierky",
+        "new": "Nová zbierka",
+        "edit": "Upraviť zbierku",
+        "search": "Hľadať zbierky...",
+        "empty": "Zatiaľ žiadne zbierky",
+        "no_search_results": "Žiadne zodpovedajúce zbierky",
+        "delete": "Vymazať",
+        "delete_confirm": "Naozaj chcete vymazať túto zbierku? Všetky lekcie, pojmy a kartičky budú stratené.",
+        "created": "Zbierka bola vytvorená.",
+        "updated": "Zbierka bola aktualizovaná.",
+        "deleted": "Zbierka bola vymazaná.",
+        "title_required": "Názov je povinný.",
+        "create_first": "Vytvorte svoju prvú zbierku",
+        "recent_lessons": "Nedávne lekcie",
+        "no_lessons": "Zatiaľ žiadne lekcie. Vytvorte prvú a začnite sa učiť!",
+        "fields": {
+            "title": "Názov",
+            "title_placeholder": "napr. Základy kalkulu, Programovanie v Pythone...",
+            "description": "Popis",
+            "description_placeholder": "O čom je táto zbierka?",
+            "icon": "Ikona",
+            "subject": "Predmet"
+        }
+    },
+    "lessons": {
+        "label": "Lekcie",
+        "new": "Nová lekcia",
+        "generate": "Vygenerovať lekciu",
+        "empty": "Zatiaľ žiadne lekcie",
+        "create_first": "Vytvorte svoju prvú lekciu",
+        "generating": "Generuje sa lekcia...",
+        "generating_hint": "Môže to trvať niekoľko sekúnd. Stránka sa aktualizuje automaticky.",
+        "failed_title": "Generovanie lekcie zlyhalo",
+        "regenerate": "Regenerovať",
+        "delete": "Vymazať",
+        "delete_confirm": "Naozaj chcete vymazať túto lekciu?",
+        "generation_started": "Generovanie lekcie začalo.",
+        "regeneration_started": "Lekcia sa regeneruje...",
+        "updated": "Lekcia bola aktualizovaná.",
+        "deleted": "Lekcia bola vymazaná.",
+        "source_text_required": "Zdrojový text je povinný.",
+        "nothing_to_update": "Nie je čo aktualizovať.",
+        "fields": {
+            "title": "Názov (voliteľné)",
+            "title_placeholder": "Auto-generované, ak ostane prázdne",
+            "source_text": "Zdrojový text",
+            "source_text_placeholder": "Vložte obsah sem...",
+            "difficulty": "Náročnosť"
+        },
+        "difficulty": {
+            "beginner": "Začiatočník",
+            "intermediate": "Pokročilý",
+            "advanced": "Expert"
+        },
+        "status": {
+            "pending": "Čaká",
+            "generating": "Generuje sa",
+            "ready": "Pripravené",
+            "failed": "Zlyhalo"
+        },
+        "progress": {
+            "new": "Nové",
+            "learning": "Učím sa",
+            "mastered": "Zvládnuté"
+        },
+        "tabs": {
+            "content": "Obsah",
+            "terms": "Pojmy",
+            "flashcards": "Kartičky",
+            "quiz": "Kvíz",
+            "tutor": "AI Tutor"
+        },
+        "quick_summary": "Rýchle zhrnutie",
+        "simple_explanation": "Jednoduché vysvetlenie",
+        "key_concepts": "Kľúčové pojmy",
+        "worked_examples": "Riešené príklady",
+        "notes": "Poznámky",
+        "common_mistakes": "Časté chyby",
+        "original_content": "Pôvodný obsah"
+    },
+    "terms": {
+        "empty": "Zatiaľ žiadne pojmy",
+        "search_placeholder": "Hľadať pojmy...",
+        "updated": "Pojem bol aktualizovaný.",
+        "invalid_difficulty": "Neplatná úroveň náročnosti.",
+        "difficulty": {
+            "all": "Všetko",
+            "unknown": "Neznámy",
+            "learning": "Učím sa",
+            "mastered": "Zvládnuté"
+        }
+    },
+    "flashcards": {
+        "empty": "Zatiaľ žiadne kartičky",
+        "front": "Predná strana",
+        "back": "Zadná strana",
+        "click_to_flip": "Kliknite pre otočenie",
+        "show_answer": "Zobraziť odpoveď",
+        "again": "Znova",
+        "hard": "Ťažké",
+        "easy": "Ľahké",
+        "invalid_difficulty": "Neplatná náročnosť.",
+        "complete": "Všetky kartičky preverené!",
+        "complete_summary": "Preverili ste {count} kartičiek.",
+        "restart": "Začať odznova"
+    },
+    "quizzes": {
+        "label": "Kvízy",
+        "empty": "Zatiaľ žiadne kvízy",
+        "questions": "otázky",
+        "question": "Otázka",
+        "start": "Spustiť kvíz",
+        "submit": "Odoslať",
+        "next": "Ďalej",
+        "finish": "Dokončiť",
+        "correct": "Správne",
+        "incorrect": "Nesprávne",
+        "correct_answer": "Správna odpoveď",
+        "your_answer": "Vaša odpoveď",
+        "type_answer": "Zadajte odpoveď...",
+        "completed": "Kvíz dokončený!",
+        "completed_message": "Dokončili ste kvíz.",
+        "score": "Skóre",
+        "mistakes": "Chyby",
+        "retry": "Opakovať kvíz",
+        "back_to_list": "Späť na kvízy",
+        "status": {
+            "not_started": "Nezačaté",
+            "in_progress": "Prebieha",
+            "completed": "Dokončené"
+        }
+    },
+    "tutor": {
+        "empty": "Pýtajte sa ma na čokoľvek o tejto zbierke alebo jej lekciách.",
+        "input_placeholder": "Zadajte svoju otázku...",
+        "send": "Odoslať",
+        "message_required": "Správa je povinná.",
+        "prompts": {
+            "explain_concept": "Vysvetli pojem",
+            "give_example": "Uveď príklad",
+            "practice": "Cvičme spolu"
+        }
+    },
+    "stats": {
+        "lessons_ready": "Pripravené lekcie",
+        "lessons_mastered": "Zvládnuté lekcie",
+        "terms_learned": "Pojmy",
+        "terms_mastered": "Zvládnuté pojmy",
+        "flashcards_due": "Kartičky na preverenie",
+        "flashcards_reviewed": "Preverené kartičky",
+        "avg_quiz_score": "Priemerné skóre kvízu"
+    },
+    "progress": {
+        "recent_attempts": "Nedávne pokusy o kvíz",
+        "no_data": "Začnite sa učiť a uvidíte tu svoj pokrok."
     },
     "auth": {
         "login": {

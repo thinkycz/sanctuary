@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
-    Activity,
     Settings as SettingsIcon,
     LogOut,
     Plus,
-    MessageSquare,
+    BookOpen,
+    Search,
     Trash2,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
@@ -16,32 +16,35 @@ import FlashAlerts from '@/components/ui/FlashAlerts.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useSharedProps } from '@/composables/useSharedProps';
-import { useActiveConversation } from '@/composables/useActiveConversation';
 
 defineProps<{
     title: string;
 }>();
 
-const { auth, conversations, activeUrl } = useSharedProps();
+const { auth, collections, activeUrl } = useSharedProps();
 const { t } = useI18n();
-const { pendingConversationId } = useActiveConversation();
-const mobileHistoryOpen = ref(false);
+const mobileSidebarOpen = ref(false);
+const searchQuery = ref('');
 
 useBoundLocale();
 
-const activeConversationId = computed(() => {
-    // While a new conversation is streaming, use the pending ID so the sidebar
-    // item is highlighted immediately without needing a router navigation.
-    if (pendingConversationId.value) return pendingConversationId.value;
-    const match = activeUrl.value.match(/^\/conversations\/([a-zA-Z0-9-]+)/);
-    return match ? match[1] : null;
+const activeCollectionId = computed(() => {
+    const match = activeUrl.value.match(/^\/collections\/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
 });
 
 const currentTab = computed(() => {
-    if (activeUrl.value.startsWith('/settings')) {
-        return 'settings';
-    }
-    return 'dashboard';
+    if (activeUrl.value.startsWith('/settings')) return 'settings';
+    if (activeUrl.value.startsWith('/app')) return 'app';
+    return 'collection';
+});
+
+const filteredCollections = computed(() => {
+    const query = searchQuery.value.trim().toLowerCase();
+    if (!query) return collections.value;
+    return collections.value.filter((c) =>
+        c.title.toLowerCase().includes(query),
+    );
 });
 
 const userInitials = computed(() => {
@@ -60,16 +63,16 @@ function logout(): void {
     router.post('/logout');
 }
 
-async function deleteConversation(id: string): Promise<void> {
+async function deleteCollection(id: number): Promise<void> {
     const confirmDialog = useConfirmDialog();
 
-    if (await confirmDialog.confirm(t('conversations.delete_confirm'))) {
-        router.delete(`/conversations/${id}`);
+    if (await confirmDialog.confirm(t('collections.delete_confirm'))) {
+        router.delete(`/collections/${id}`);
     }
 }
 
-function closeMobileHistory(): void {
-    mobileHistoryOpen.value = false;
+function closeMobileSidebar(): void {
+    mobileSidebarOpen.value = false;
 }
 </script>
 
@@ -92,78 +95,88 @@ function closeMobileHistory(): void {
         >
             <!-- Brand App Header -->
             <div
-                class="mb-8 flex cursor-default items-center gap-3 px-2 transition-all select-none"
+                class="mb-6 flex cursor-default items-center gap-3 px-2 transition-all select-none"
             >
-                <Brand href="/dashboard" />
+                <Brand href="/app" />
             </div>
 
-            <!-- Nav Links -->
-            <nav class="flex-1 space-y-1.5 overflow-y-auto">
-                <Link
-                    href="/dashboard"
-                    :class="[
-                        'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition-all',
-                        currentTab === 'dashboard' && !activeConversationId
-                            ? 'border-r-2 border-primary bg-surface-container-low font-bold text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]'
-                            : 'text-on-surface-variant hover:bg-surface-container-low',
-                    ]"
-                >
-                    <Activity :size="16" />
-                    {{ t('nav.dashboard') }}
-                </Link>
+            <!-- New Collection Button -->
+            <Link
+                href="/app"
+                class="mb-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-primary/20 bg-gradient-to-b from-primary-container to-primary px-4 py-2.5 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(13,148,136,0.2)] transition hover:brightness-105 active:scale-[0.98]"
+            >
+                <Plus :size="14" />
+                {{ t('collections.new') }}
+            </Link>
 
-                <Link
-                    href="/dashboard"
-                    class="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold text-on-surface-variant transition-all hover:bg-surface-container-low"
-                    :title="t('nav.new_chat')"
-                >
-                    <Plus :size="16" />
-                    {{ t('nav.new_chat') }}
-                </Link>
+            <!-- Search -->
+            <div class="relative mb-4">
+                <Search
+                    :size="14"
+                    class="absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant opacity-60"
+                />
+                <input
+                    v-model="searchQuery"
+                    type="text"
+                    :placeholder="t('collections.search')"
+                    class="w-full rounded-xl border border-outline-glass bg-surface-container-low py-2 pr-3 pl-9 text-xs text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none"
+                />
+            </div>
 
-                <!-- Conversations History -->
-                <div
-                    v-if="conversations.length > 0"
-                    class="mt-6 pt-4 border-t border-outline-glass"
+            <!-- Collections List -->
+            <nav class="flex-1 space-y-1 overflow-y-auto">
+                <p
+                    class="mb-2 px-3 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase opacity-75"
                 >
-                    <p
-                        class="px-3 mb-2 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase opacity-75"
+                    {{ t('collections.label') }}
+                </p>
+                <div v-if="filteredCollections.length > 0" class="space-y-1">
+                    <div
+                        v-for="collection in filteredCollections"
+                        :key="collection.id"
+                        class="group relative flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all hover:bg-surface-container-low"
+                        :class="[
+                            activeCollectionId === collection.id
+                                ? 'bg-surface-container-low border-r-2 border-primary font-bold text-primary'
+                                : 'text-on-surface-variant',
+                        ]"
                     >
-                        {{ t('nav.history') }}
-                    </p>
-                    <TransitionGroup name="list" tag="div" class="space-y-1">
-                        <div
-                            v-for="chat in conversations"
-                            :key="chat.id"
-                            class="group relative flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all hover:bg-surface-container-low"
-                            :class="[
-                                activeConversationId === chat.id
-                                    ? 'bg-surface-container-low font-bold text-primary border-r-2 border-primary'
-                                    : 'text-on-surface-variant',
-                            ]"
+                        <Link
+                            :href="`/collections/${collection.id}`"
+                            class="flex flex-1 items-center gap-3 truncate pr-6 text-left"
                         >
-                            <Link
-                                :href="`/conversations/${chat.id}`"
-                                class="flex flex-1 items-center gap-3 truncate pr-6 text-left"
+                            <span
+                                v-if="collection.icon"
+                                class="shrink-0 text-sm"
+                                >{{ collection.icon }}</span
                             >
-                                <MessageSquare :size="14" class="shrink-0" />
-                                <span class="truncate">{{ chat.title }}</span>
-                            </Link>
-                            <button
-                                @click.stop="deleteConversation(chat.id)"
-                                class="absolute right-2 hidden cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-error-red/10 hover:text-error-red group-hover:block"
-                                :title="t('nav.delete_chat')"
-                            >
-                                <Trash2 :size="12" />
-                            </button>
-                        </div>
-                    </TransitionGroup>
+                            <BookOpen v-else :size="14" class="shrink-0" />
+                            <span class="truncate">{{ collection.title }}</span>
+                        </Link>
+                        <button
+                            @click.stop="deleteCollection(collection.id)"
+                            class="absolute right-2 hidden cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-error-red/10 hover:text-error-red group-hover:block"
+                            :title="t('collections.delete')"
+                        >
+                            <Trash2 :size="12" />
+                        </button>
+                    </div>
                 </div>
+                <p
+                    v-else
+                    class="px-3 py-2 text-xs text-on-surface-variant opacity-70"
+                >
+                    {{
+                        searchQuery
+                            ? t('collections.no_search_results')
+                            : t('collections.empty')
+                    }}
+                </p>
             </nav>
 
             <!-- Footer: User Identity + Quick Actions -->
             <div
-                class="flex items-center justify-between gap-2 border-t border-outline-glass pt-4 px-2"
+                class="flex items-center justify-between gap-2 border-t border-outline-glass px-2 pt-4"
             >
                 <div class="flex min-w-0 flex-1 items-center gap-3">
                     <div
@@ -179,7 +192,7 @@ function closeMobileHistory(): void {
                             {{ userLabel }}
                         </p>
                         <p
-                            class="truncate text-[9px] text-on-surface-variant opacity-85 font-medium"
+                            class="truncate text-[9px] font-medium text-on-surface-variant opacity-85"
                         >
                             {{ auth.user ? auth.user.email : '' }}
                         </p>
@@ -217,16 +230,16 @@ function closeMobileHistory(): void {
             class="glass-panel sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-outline-glass px-4 shadow-sm md:hidden"
         >
             <div class="flex items-center gap-2">
-                <Brand href="/dashboard" />
+                <Brand href="/app" />
             </div>
 
             <div class="flex items-center gap-1.5">
                 <Link
-                    href="/dashboard"
+                    href="/app"
                     class="rounded-lg p-2 text-on-surface-variant transition-all"
-                    :title="t('nav.new_chat')"
-                    :aria-label="t('nav.new_chat')"
-                    @click="closeMobileHistory"
+                    :title="t('collections.new')"
+                    :aria-label="t('collections.new')"
+                    @click="closeMobileSidebar"
                 >
                     <Plus :size="16" />
                 </Link>
@@ -234,29 +247,17 @@ function closeMobileHistory(): void {
                     type="button"
                     class="rounded-lg p-2 text-on-surface-variant transition-all"
                     :class="
-                        mobileHistoryOpen
+                        mobileSidebarOpen
                             ? 'bg-surface-container-low text-primary'
                             : ''
                     "
-                    :title="t('nav.history')"
-                    :aria-label="t('nav.history')"
-                    :aria-expanded="mobileHistoryOpen"
-                    @click="mobileHistoryOpen = !mobileHistoryOpen"
+                    :title="t('collections.label')"
+                    :aria-label="t('collections.label')"
+                    :aria-expanded="mobileSidebarOpen"
+                    @click="mobileSidebarOpen = !mobileSidebarOpen"
                 >
-                    <MessageSquare :size="16" />
+                    <BookOpen :size="16" />
                 </button>
-                <Link
-                    href="/dashboard"
-                    :class="[
-                        'rounded-lg p-2 transition-all',
-                        currentTab === 'dashboard'
-                            ? 'font-bold text-primary bg-surface-container-low'
-                            : 'text-on-surface-variant',
-                    ]"
-                    @click="closeMobileHistory"
-                >
-                    <Activity :size="16" />
-                </Link>
                 <Link
                     href="/settings"
                     :class="[
@@ -265,7 +266,7 @@ function closeMobileHistory(): void {
                             ? 'font-bold text-primary bg-surface-container-low'
                             : 'text-on-surface-variant',
                     ]"
-                    @click="closeMobileHistory"
+                    @click="closeMobileSidebar"
                 >
                     <SettingsIcon :size="16" />
                 </Link>
@@ -279,45 +280,48 @@ function closeMobileHistory(): void {
         </header>
 
         <div
-            v-if="mobileHistoryOpen"
+            v-if="mobileSidebarOpen"
             class="glass-panel z-20 max-h-64 overflow-y-auto border-b border-outline-glass px-4 py-3 md:hidden"
         >
             <p
                 class="mb-2 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase opacity-75"
             >
-                {{ t('nav.history') }}
+                {{ t('collections.label') }}
             </p>
-            <div v-if="conversations.length > 0" class="space-y-1">
+            <div v-if="collections.length > 0" class="space-y-1">
                 <div
-                    v-for="chat in conversations"
-                    :key="chat.id"
+                    v-for="collection in collections"
+                    :key="collection.id"
                     class="relative flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold"
                     :class="[
-                        activeConversationId === chat.id
+                        activeCollectionId === collection.id
                             ? 'bg-surface-container-low font-bold text-primary'
                             : 'text-on-surface-variant',
                     ]"
                 >
                     <Link
-                        :href="`/conversations/${chat.id}`"
+                        :href="`/collections/${collection.id}`"
                         class="flex flex-1 items-center gap-3 truncate pr-8 text-left"
-                        @click="closeMobileHistory"
+                        @click="closeMobileSidebar"
                     >
-                        <MessageSquare :size="14" class="shrink-0" />
-                        <span class="truncate">{{ chat.title }}</span>
+                        <span v-if="collection.icon" class="shrink-0 text-sm">{{
+                            collection.icon
+                        }}</span>
+                        <BookOpen v-else :size="14" class="shrink-0" />
+                        <span class="truncate">{{ collection.title }}</span>
                     </Link>
                     <button
                         type="button"
-                        @click.stop="deleteConversation(chat.id)"
+                        @click.stop="deleteCollection(collection.id)"
                         class="absolute right-2 cursor-pointer rounded-lg p-1 text-on-surface-variant hover:bg-error-red/10 hover:text-error-red"
-                        :title="t('nav.delete_chat')"
+                        :title="t('collections.delete')"
                     >
                         <Trash2 :size="12" />
                     </button>
                 </div>
             </div>
             <p v-else class="px-3 py-2 text-xs text-on-surface-variant">
-                {{ t('nav.no_chats') }}
+                {{ t('collections.empty') }}
             </p>
         </div>
 
@@ -335,7 +339,7 @@ function closeMobileHistory(): void {
                 ></div>
 
                 <div
-                    class="z-10 flex flex-1 flex-col overflow-hidden max-w-4xl w-full mx-auto"
+                    class="z-10 flex flex-1 flex-col overflow-hidden w-full max-w-5xl mx-auto"
                 >
                     <FlashAlerts />
                     <ConfirmDialog />
@@ -348,15 +352,3 @@ function closeMobileHistory(): void {
         </main>
     </div>
 </template>
-
-<style scoped>
-.list-enter-active,
-.list-leave-active {
-    transition: all 0.2s ease-in-out;
-}
-.list-enter-from,
-.list-leave-to {
-    opacity: 0;
-    transform: scale(0.95) translateX(-10px);
-}
-</style>

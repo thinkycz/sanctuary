@@ -7,8 +7,8 @@
 @source '../**/*.vue';
 
 @theme {
-    --color-primary: #0f172a;
-    --color-primary-container: #1e293b;
+    --color-primary: #0d9488;
+    --color-primary-container: #0f766e;
     --color-surface-bg: #f8fafc;
     --color-surface-container: #eef2f6;
     --color-surface-container-low: #f3f6f9;
@@ -71,4 +71,21 @@
     &::-webkit-scrollbar {
         display: none;
     }
+}
+
+@utility perspective-1000 {
+    perspective: 1000px;
+}
+
+@utility preserve-3d {
+    transform-style: preserve-3d;
+}
+
+@utility backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+@utility rotate-y-180 {
+    transform: rotateY(180deg);
 }
